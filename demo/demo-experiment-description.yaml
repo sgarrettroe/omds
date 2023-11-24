@@ -1,0 +1,141 @@
+# Demonstration file that a researcher could generate to describe their experiment.
+# The file is intended to be human readable and include the metadata needed to generate
+# a scidata file.
+context: https://stuchalk.github.io/scidata/contexts/scidata.jsonld
+uid: a_unique_identifier_goes_here
+docid: a_different_identifier_goes_here
+version: 1
+base: 'http://pitt.edu/~sgr/a_unique_identifier_goes_here'
+namespaces: {'chm': "https://stuchalk.github.io/scidata/ontology/chemical.owl#",
+             'sub': 'https://stuchalk.github.io/scidata/ontology/substance.owl#',
+             'gb': 'https://goldbook.iupac.org/'}
+title: "Ultrafast Dynamics of CO2 in ionic liquids"
+authors:
+    - {name: Sean Garrett-Roe, affiliation: University of Pittsburgh, orcid: https://orcid.org/0000-0001-6199-8773}
+    - {name: Tom Brinzer, affiliation: University of Pittsburgh, orcid: https://orcid.org/0000-0002-4167-391X}
+description: "2D-IR spectroscopy of CO2 in a series of ionic liquids"
+publisher: SGRLab, Department of Chemistry, University of Pittsburgh, Pittsburgh, PA, USA
+keywords:
+    - ionic liquids
+    - carbon dioxide
+    - 2D-IR spectroscopy
+link: http://www.pitt.edu/~sgr/examples/demo-experiment-description.yaml
+
+#
+# SciData section
+#
+discipline: "w3i:Chemistry"
+subdiscipline: "w3i:PhysicalChemistry"
+
+## Methodology
+
+# evaluation can be experimental, computational, etc.
+evaluation: "experiment"
+
+# an aspect is a measurement, resource, procedure
+# "measurement" is a measurement type, like FTIR, etc
+#
+# should we propose changes to Ontobee https://ontobee.org/ontology/CHMO?iri=http://purl.obolibrary.org/obo
+# transmission spectroscopy = obo:CHMO_0000938
+# FTIR = obo:CHMO_0000636
+# third-order spectroscopy in box-car geometry ("Four-wave mixing") = obo:CHMO_0002100
+# third-order spectroscopy in pump-probe geometry ("Femtosecond pump-probe") = obo:CHMO_0002446
+#
+aspects:
+  - {'@id': 'measurement',
+  'scope': 'resource/1/',
+  'technique': 'Fourier transform infrared spectroscopy',
+  'technique#': 'obo:CHMO_0000636' }
+  - {'@id': 'resource',
+  'name': 'Nicolet FT-IR Spectrometer',
+  'instrumentType': 'Fourier transform infrared spectrometer',
+  'instrument#': 'obo:CHMO_0001823',
+  'vendor': 'Thermo Nicolet',
+  'catalognumber': '6700',
+  'settings': ''} #how to get settings from the data files?
+  - {'@id': 'procedure',
+    'description': 'Load CO2(g) into IL by stirring in 1 atm CO2(g) atmosphere. N2(g) purged sample chamber, 12 um path length.'
+  }
+
+## A description of the chemical system studied
+# this is hard to get my head around substances, constituents, conditions
+
+val1: &val1
+  {'@id': 'value', 'number': 0.010, 'unit#': 'qudt:MOL-PER-L'}
+val2: &val2
+  {'@id': 'value', 'number': 1, 'unit#': 'qudt:MicroL'}
+val3: &val3
+  {'@id': 'value', 'number': 12, 'unit#': 'qudt:MicroM'}
+val4: &val4
+  {'@id': 'value', 'number': 21, 'unit#': 'qudt:DEG_C'}
+
+prp1: &prp1
+  {'@id': 'property',
+        'quantitykind': 'amount of substance concentration',
+        'quantity': 'Concentration (w/v)',
+        'value': *val1 }
+prp2: &prp2
+  {'@id': 'property',
+        'quantitykind': 'volume',
+        'quantity': 'Volume of solution',
+        'value': *val2 }
+prp3: &prp3
+  {'@id': 'property',
+        'quantitykind': 'length',
+        'quantity': 'Path length of sample',
+        'value': *val3 }
+con1: &con1
+  {'@id': 'constituent',
+        'source': 'substance/1/',
+        'role#': 'chm:analyte',
+        'properties': [*prp1, *prp2, *prp3]
+  }
+con2: &con2
+  {'@id': 'constituent',
+        'source': 'substance/2/',
+        'role#': 'chm:solvent',
+        'properties': [*prp1, *prp2, *prp3]
+    }
+
+facets:
+  - {'@id': 'substance',
+    'name': 'carbon dioxide',
+    'inchi': 'InChI=1S/CO2/c2-1-3',
+    'chebi': 'obo:CHEBI_16526'}
+  - {'@id': 'substance',
+    'name': '1-butyl-3-methylimidazolium hexafluorophosphate',
+    'inchi': 'InChI=1S/C8H15N2.F6P/c1-3-4-5-10-7-6-9(2)8-10;1-7(2,3,4,5)6/h6-8H,3-5H2,1-2H3;/q+1;-1',
+    'chembl': 'CHEMBL3184676',
+    'chebi': '',
+    'cas': '174501-64-5',
+    'pubchemCID': '2734174'}
+
+  - {'@id': 'substance',
+    'title': 'CO2 dissolved in BMIM PF6',
+    'aggregation#': 'sub:aq',
+    'mixtype#': 'sub:homogeneousSolution',
+    'phase#': 'sub:liquid',
+    'constituents': [*con1, *con2],
+    'properties': [ *prp2 ] }
+  - {'@id': 'condition',
+    'source#': 'measurement/1/',
+    'scope#': 'substance/1/',
+    'quantitykind': 'temperature',
+    'quantity': 'Ambient temperature',
+    'quantity#': 'gb:T06321',
+    'value': *val4}
+
+
+
+
+## Data
+dataset: "TBD"
+
+## Sources (literature references)
+sources:
+  - { citation: "Brinzer et al. J. Chem. Phys. 142, 212425 (2015)",
+      doi: "https://doi.org/10.1063/1.4917467" }
+
+## Rights
+rights:
+  - {license: "CC0", holder: Sean Garrett-Roe}
