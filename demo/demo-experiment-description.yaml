@@ -72,7 +72,7 @@ val4: &val4
 prp1: &prp1
   {'@id': 'property',
         'quantitykind': 'amount of substance concentration',
-        'quantity': 'Concentration (w/v)',
+        'quantity': 'Concentration',
         'value': *val1 }
 prp2: &prp2
   {'@id': 'property',
