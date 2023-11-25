@@ -21,6 +21,15 @@ keywords:
     - 2D-IR spectroscopy
 link: http://www.pitt.edu/~sgr/examples/demo-experiment-description.yaml
 
+# Sources (literature references)
+sources:
+  - { citation: "Brinzer et al. J. Chem. Phys. 142, 212425 (2015)",
+      doi: "https://doi.org/10.1063/1.4917467" }
+
+# Rights
+rights:
+  - {license: https://creativecommons.org/licenses/by/4.0/, holder: Sean Garrett-Roe}
+
 #
 # SciData section
 #
@@ -109,7 +118,6 @@ facets:
     'chebi': '',
     'cas': '174501-64-5',
     'pubchemCID': '2734174'}
-
   - {'@id': 'substance',
     'title': 'CO2 dissolved in BMIM PF6',
     'aggregation#': 'sub:aq',
@@ -131,11 +139,3 @@ facets:
 ## Data
 dataset: "TBD"
 
-## Sources (literature references)
-sources:
-  - { citation: "Brinzer et al. J. Chem. Phys. 142, 212425 (2015)",
-      doi: "https://doi.org/10.1063/1.4917467" }
-
-## Rights
-rights:
-  - {license: "CC0", holder: Sean Garrett-Roe}
