@@ -11,11 +11,12 @@
 ---
 name: omds
 dependencies:
-    - python
+    - python=3.11
     - numpy
     - scipy
     - jupyter
     - pyyaml
+    - conda-forge::rdflib
     - pip
     - pip:
         - scidata
