@@ -17,6 +17,7 @@ dependencies:
     - jupyter
     - pyyaml
     - conda-forge::rdflib
+    - conda-forge::h5py
     - pip
     - pip:
         - scidata

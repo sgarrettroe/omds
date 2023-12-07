@@ -3,13 +3,14 @@ output in canonical file format (HDF5).
 """
 import numpy as np
 import scipy.constants as constants
+import h5py
 from pprint import pprint
 
 TIME_DOMAIN = 'TIME'
 FREQUENCY_DOMAIN = 'FREQ'
 
 
-class Axis:
+class Axis():
     """
     A time or frequency axis object.
     """
@@ -109,38 +110,49 @@ class Axis:
         # print axis and label in some nice way
         pass
 
+    def __getattr__(self, item):
+        match item:
+            case 'dset' | 'dataset':
+                d = {'data':self.x,
+                     'dtype':'f',
+                     'attr':{'units':self.units} | self.options}
+                return d
 
-# Ideas for unit tests follow. These match my matlab code to the precision of c
+
+class Outputter:
+    """Base class for output functionality. All methods should inherit from this class.
+    """
+    # take response function in and provide fxn to write output file
+
+    def output(self, obj, filename, root='/'):
+        pass
+
+
+
+class OutputterHDF5(Outputter):
+    """Class to write output to an HDF5 file.
+    """
+    # default output mechanism, writes HDF5 file
+    def output(self, obj, filename, root='/'):
+        match obj:
+            case Axis():  # ToDo: change to look for dset ???
+                with h5py.File(filename,'a') as f:
+                    dset = obj.dset
+                    #h5dset = f.create_dataset('x1', (len(obj.x),), dtype='f', data=obj.x)
+                    h5dset = f.create_dataset(f'{root}x1', (len(dset['data']),), dtype=dset['dtype'], data=dset['data'])
+                    for (key, val) in dset['attr'].items():
+                        h5dset.attrs[key] = val
+
+
 t = np.arange(32, dtype=float)
-options1 = {'zeropadded_length': len(t)}
-dim1 = Axis(t, 'fs', options=options1)
-pprint(dim1.x)
-dim1.t_to_w()
-pprint(dim1.x)
-# array([    0.        ,  1042.38779749,  2084.77559499,  3127.16339248,
-#        4169.55118998,  5211.93898747,  6254.32678497,  7296.71458246,
-#        8339.10237995,  9381.49017745, 10423.87797494, 11466.26577244,
-#       12508.65356993, 13551.04136742, 14593.42916492, 15635.81696241,
-#       16678.20475991, 17720.5925574 , 18762.9803549 , 19805.36815239,
-#       20847.75594988, 21890.14374738, 22932.53154487, 23974.91934237,
-#       25017.30713986, 26059.69493736, 27102.08273485, 28144.47053234,
-#       29186.85832984, 30229.24612733, 31271.63392483, 32314.02172232])
+opts = {'fftshift': True}
+dim = Axis(t, 'fs', options=opts)
 
-options2 = {}
-dim1 = Axis(t, 'fs', options=options2)
-pprint(dim1.x)
-dim1.t_to_w()
-pprint(dim1.x)
+o = OutputterHDF5()
+o.output(dim,'tmp.h5')
 
-options3 = {'fftshift': True}
-dim1 = Axis(t, 'fs', options=options3)
-pprint(dim1.x)
-dim1.t_to_w()
-pprint(dim1.x)
+with h5py.File('tmp.h5','r') as f:
+    for key in f.keys():
+        pprint(key)
+    pprint(f['x1'].attrs())
 
-options4 = {'fftshift': True, 'zeropadded_length': 33}
-t = np.arange(33, dtype=float)
-dim1 = Axis(t, 'fs', options=options4)
-pprint(dim1.x)
-dim1.t_to_w()
-pprint(dim1.x)
