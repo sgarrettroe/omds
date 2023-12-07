@@ -26,21 +26,20 @@ class MyOmdsDatasetObj:
     """Base class that objects that output data should subclass.
 
     The interface is obj.dataset which should return a dict of {'data':val,'dtype':val,'attr':dict}.
-    Subclasses should define _get_dataset which must return that dict structure.
+    Subclasses must define _get_dataset which must return that dict structure or list of them.
 
     dataset = {'basename':<name>,
                'data':<data scalar or array>,
                'dtype':<data type string>,
                'attr':<dict of data attributes>}
     """
-    def __getattr__(self, item):
-        match item:
-            case 'dset' | 'dataset':
-                return self._get_dataset()
+    @property
+    def dataset(self):
+        return self._get_dataset()
 
     def _get_dataset(self) -> dict:
-        """Function that should be created to return a dataset dictionary."""
-        pass
+        """Function that should be created to return a dataset dictionary or list of them."""
+        raise NotImplementedError("Please Implement this method")
 
 
 class Axis(MyOmdsDatasetObj):
@@ -210,6 +209,7 @@ try:
     logger.info(f'removing {filename}')
 except FileNotFoundError:
     pass
+
 o = OutputterHDF5()
 o.output([dim, dim], filename)
 
