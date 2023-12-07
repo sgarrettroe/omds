@@ -4,13 +4,46 @@ output in canonical file format (HDF5).
 import numpy as np
 import scipy.constants as constants
 import h5py
-from pprint import pprint
+from collections import defaultdict
+from collections.abc import Iterable
+import logging
+
+# for debugging / testing
+from pprint import pformat
+import os
 
 TIME_DOMAIN = 'TIME'
 FREQUENCY_DOMAIN = 'FREQ'
 
+# set up logging
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(name)-24s %(levelname)-8s %(message)s')
+logger = logging.getLogger('omds.atomic_data_draft')
+logger.setLevel(logging.DEBUG)
 
-class Axis():
+
+class MyOmdsDatasetObj:
+    """Base class that objects that output data should subclass.
+
+    The interface is obj.dataset which should return a dict of {'data':val,'dtype':val,'attr':dict}.
+    Subclasses should define _get_dataset which must return that dict structure.
+
+    dataset = {'basename':<name>,
+               'data':<data scalar or array>,
+               'dtype':<data type string>,
+               'attr':<dict of data attributes>}
+    """
+    def __getattr__(self, item):
+        match item:
+            case 'dset' | 'dataset':
+                return self._get_dataset()
+
+    def _get_dataset(self) -> dict:
+        """Function that should be created to return a dataset dictionary."""
+        pass
+
+
+class Axis(MyOmdsDatasetObj):
     """
     A time or frequency axis object.
     """
@@ -90,6 +123,8 @@ class Axis():
         """ Load units and conversion factors from QUDT. But I don't know how to do that yet! For now use
         scipy.constants.
         """
+        # ToDo: figure out how to scrape URIs using rdflib
+        # ToDo: add units eV, atomic units, what else?
         if uri_list is None:
             self.known_unit_table = {
                 'time_units': {
@@ -110,13 +145,19 @@ class Axis():
         # print axis and label in some nice way
         pass
 
-    def __getattr__(self, item):
-        match item:
-            case 'dset' | 'dataset':
-                d = {'data':self.x,
-                     'dtype':'f',
-                     'attr':{'units':self.units} | self.options}
-                return d
+    def _get_dataset(self) -> dict:
+        d = {'basename':'x',
+             'data': self.x,
+             'dtype': 'f',
+             'attr': {'units': self.units} | self.options}
+        return d
+
+
+class Spectrum(MyOmdsDatasetObj):
+    def _get_dataset(self) -> dict:
+        return {'data': 44.0,
+                'dtype': 'f',
+                'attr': {'units': 'G-PER-MOL'}}
 
 
 class Outputter:
@@ -128,31 +169,51 @@ class Outputter:
         pass
 
 
-
 class OutputterHDF5(Outputter):
     """Class to write output to an HDF5 file.
     """
     # default output mechanism, writes HDF5 file
-    def output(self, obj, filename, root='/'):
-        match obj:
-            case Axis():  # ToDo: change to look for dset ???
-                with h5py.File(filename,'a') as f:
-                    dset = obj.dset
-                    #h5dset = f.create_dataset('x1', (len(obj.x),), dtype='f', data=obj.x)
-                    h5dset = f.create_dataset(f'{root}x1', (len(dset['data']),), dtype=dset['dtype'], data=dset['data'])
-                    for (key, val) in dset['attr'].items():
-                        h5dset.attrs[key] = val
+    def output(self, obj_in, filename, root='/'):
+        """Output HDF5 file determined by object's dataset attribute."""
+
+        # make sure there is one trailing / in the root name
+        root = root.rstrip('/') + '/'
+
+        if isinstance(obj_in, Iterable):
+            obj_list = obj_in
+        else:
+            obj_list = [obj]
+
+        # loop over elements and print out each one
+        name_counts = defaultdict(int)  # returns an empty integer for new key items
+        for obj in obj_list:
+            match obj:
+                case MyOmdsDatasetObj(dataset=dset):
+                    with h5py.File(filename, 'a') as f:
+                        name_counts[dset["basename"]] += 1
+                        h5dset = f.create_dataset(f'{root}{dset["basename"]}{name_counts[dset["basename"]]}',
+                                                  dset['data'].shape,
+                                                  dtype=dset['dtype'],
+                                                  data=dset['data'])
+                        for (key, val) in dset['attr'].items():
+                            h5dset.attrs[key] = val
 
 
 t = np.arange(32, dtype=float)
 opts = {'fftshift': True}
 dim = Axis(t, 'fs', options=opts)
 
+filename = 'tmp.h5'
+# try to clean up from last time
+try:
+    os.remove(filename)
+    logger.info(f'removing {filename}')
+except FileNotFoundError:
+    pass
 o = OutputterHDF5()
-o.output(dim,'tmp.h5')
+o.output([dim, dim], filename)
 
-with h5py.File('tmp.h5','r') as f:
-    for key in f.keys():
-        pprint(key)
-    pprint(f['x1'].attrs())
-
+logger.debug(f'reading h5 file {filename}')
+with h5py.File(filename, 'r') as f:
+    logger.debug('h5 keys found: ' + pformat(f.keys()))
+    logger.debug(pformat(f['x1'].attrs.items()))
