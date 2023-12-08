@@ -172,30 +172,52 @@ class OutputterHDF5(Outputter):
     """Class to write output to an HDF5 file.
     """
     # default output mechanism, writes HDF5 file
-    def output(self, obj_in, filename, root='/'):
-        """Output HDF5 file determined by object's dataset attribute."""
+    def output(self, obj_in, filename, root='/', access_mode = 'w')->None:
+        """Output HDF5 file that saves the dataset or sets of them.
+
+        Parameters
+        ----------
+        obj_in : MyOmdsDatasetObj or list of MyOmdsDatasetObj
+            The input objects to be processed. They must have an
+            attribute dataset. Dataset must be a dictionary with keys
+            "basename", "data", and "dtype".
+        filename : str
+            The name of the output file.
+        root :
+            The base group of the dataset(s).
+        access_mode : {'w','a'}, optional
+            The mode used to open the output file. The default is 'w',
+            which overwrites and existing file.
+
+        Returns
+        -------
+        None
+        """
 
         # make sure there is one trailing / in the root name
         root = root.rstrip('/') + '/'
 
-        if isinstance(obj_in, Iterable):
-            obj_list = obj_in
-        else:
-            obj_list = [obj]
-
-        # loop over elements and print out each one
+        # dictionary of how many times each basename, which is used to label datasets uniquely
         name_counts = defaultdict(int)  # returns an empty integer for new key items
-        for obj in obj_list:
-            match obj:
-                case MyOmdsDatasetObj(dataset=dset):
-                    with h5py.File(filename, 'a') as f:
-                        name_counts[dset["basename"]] += 1
-                        h5dset = f.create_dataset(f'{root}{dset["basename"]}{name_counts[dset["basename"]]}',
-                                                  dset['data'].shape,
-                                                  dtype=dset['dtype'],
-                                                  data=dset['data'])
-                        for (key, val) in dset['attr'].items():
-                            h5dset.attrs[key] = val
+
+        def process_item(obj):
+            if isinstance(obj, Iterable):
+                for this_obj in obj:
+                    process_item(this_obj)
+            else:
+                dset = obj.dataset
+                root_basename = root.lstrip('/') + dset["basename"]
+                name_counts[root_basename] += 1
+                full_name = f'{root_basename}{name_counts[root_basename]}'
+                h5dset = f.create_dataset(full_name,
+                                          dset['data'].shape,
+                                          dtype=dset['dtype'],
+                                          data=dset['data'])
+                for (key, val) in dset['attr'].items():
+                    h5dset.attrs[key] = val
+
+        with h5py.File(filename, access_mode) as f:
+            process_item(obj_in)  # recursively process input (depth first)
 
 
 t = np.arange(32, dtype=float)
@@ -211,9 +233,19 @@ except FileNotFoundError:
     pass
 
 o = OutputterHDF5()
-o.output([dim, dim], filename)
+
+# start a file with 3 dimension datasets (axes), some being nested
+o.output([dim, [dim, dim]], filename)
 
 logger.debug(f'reading h5 file {filename}')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['x1'].attrs.items()))
+
+# add another axis under raw/
+o.output([dim], filename, root='raw', access_mode='a')
+
+with h5py.File(filename, 'r') as f:
+    logger.debug('h5/raw keys found: ' + pformat(f['raw'].keys()))
+    logger.debug(pformat(f['raw'].attrs.items()))
+
