@@ -25,7 +25,7 @@ logger.setLevel(logging.DEBUG)
 class MyOmdsDatasetObj:
     """Base class that objects that output data should subclass.
 
-    The interface is obj.dataset which should return a dict of {'data':val,'dtype':val,'attr':dict}.
+    The interface is `obj.dataset` which should return a dict of {'data':val,'dtype':val,'attr':dict}.
     Subclasses must define _get_dataset which must return that dict structure or list of them.
 
     dataset = {'basename':<name>,
@@ -145,7 +145,7 @@ class Axis(MyOmdsDatasetObj):
         pass
 
     def _get_dataset(self) -> dict:
-        d = {'basename':'x',
+        d = {'basename': 'x',
              'data': self.x,
              'dtype': 'f',
              'attr': {'units': self.units} | self.options}
@@ -153,6 +153,9 @@ class Axis(MyOmdsDatasetObj):
 
 
 class Spectrum(MyOmdsDatasetObj):
+    def __init__(self):
+        pass
+
     def _get_dataset(self) -> dict:
         return {'data': 44.0,
                 'dtype': 'f',
@@ -172,7 +175,7 @@ class OutputterHDF5(Outputter):
     """Class to write output to an HDF5 file.
     """
     # default output mechanism, writes HDF5 file
-    def output(self, obj_in, filename, root='/', access_mode = 'w')->None:
+    def output(self, obj_in, filename, root='/', access_mode='w') -> None:
         """Output HDF5 file that saves the dataset or sets of them.
 
         Parameters
@@ -249,3 +252,4 @@ with h5py.File(filename, 'r') as f:
     logger.debug('h5/raw keys found: ' + pformat(f['raw'].keys()))
     logger.debug(pformat(f['raw'].attrs.items()))
 
+# --- last line
