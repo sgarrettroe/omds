@@ -187,11 +187,11 @@ class Polarization(MyOmdsDatasetObj):
                             angles=np.array([0, np.pi/2]),
                             Stokes=np.array([1, 0, 0, -1]))
 
-    def __init__(self,pol_in):
-        self.pol = getattr(self,pol_in)
+    def __init__(self, pol_in):
+        self.pol = getattr(self, pol_in)
 
     def _get_dataset(self) -> dict:
-        return {'basename':'pol',
+        return {'basename': 'pol',
                 'data': self.pol.Jones3,  # ToDo: make special type???
                 'dtype': self.pol.Jones3.dtype,
                 'attr': {'label': self.pol.name}}
@@ -319,7 +319,8 @@ class Spectrum(MyOmdsDatasetObj):
                 'data': self.data,
                 'dtype': self.data.dtype,
                 'attr': {'units': 'mOD',
-                        }}
+                         }
+                }
 
 
 class Outputter:
