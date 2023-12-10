@@ -10,6 +10,7 @@ from collections.abc import Iterable
 from enum import StrEnum, auto
 import logging
 from pprint import pformat
+from typing import Tuple
 
 # for debugging / testing (can/should be removed)
 import os
@@ -43,10 +44,10 @@ class MyOmdsDatasetObj:
     ----------
     dataset: dict
         Dictionary that describes the dataset in the form
-        `d = {'basename':<name>,
-               'data':<data scalar or array>,
-               'dtype':<data type string>,
-               'attr':<dict of data attributes>}`
+        ``d = {'basename': <name>,
+               'data': <data scalar or array>,
+               'dtype': <data type string>,
+               'attr': <dict of data attributes>}``
 
     Methods
     -------
@@ -69,6 +70,13 @@ PolarizationTuple = namedtuple('Polarization',
                                 'cartesian',
                                 'angles',
                                 'Stokes'])
+POLARIZATION_TYPE = np.dtype([('name', h5py.string_dtype()),
+                              ('Jones3', 'c', (3,)),
+                              ('cartesian', 'f', (3,)),
+                              ('angles', 'f', (2,)),
+                              ('Stokes', 'f', (4,)),
+                              ])
+MAGIC_ANGLE = np.arccos(np.sqrt(1/3))
 
 
 class Polarization(MyOmdsDatasetObj):
@@ -81,39 +89,63 @@ class Polarization(MyOmdsDatasetObj):
 
     .. code-block:: python
 
-        pol = [Polarization.X, Polarization.X,
-               Polarization.X, Polarization.X]
+        pol = [Polarization('X'), Polarization.('X'),
+               Polarization.('X'), Polarization.('X')]
 
     and XXYY with
 
     .. code-block:: python
 
-        pol = [Polarization.X, Polarization.X,
-               Polarization.Y, Polarization.Y]
+        pol = [Polarization('X'), Polarization('X'),
+               Polarization('Y'), Polarization('Y')]
 
     additional polarizations can be added by
     .. code-block:: python
 
-        setattr(Polarization, <attribute_name>, <polarization_tuple>)
+        setattr(Polarization, <attribute_name>,
+            <wrapped_polarization_tuple>)
 
-    for example, +45° linear polarization travelling in the Z direction
+    for example, +45° linear polarization travelling in the Z-direction
     could be coded
     .. code-block:: python
 
-        pt = PolarizationTuple(name='L_45',
+        pt = np.array([PolarizationTuple(name='lin_45_Z',
                           Jones3=np.array([1, 1, 0])/np.sqrt(2),
                           cartesian=[0, 0, 1],
                           angles=[np.pi/4, 0],
-                          Stokes=[1, 0, 1, 0])
+                          Stokes=[1, 0, 1, 0])],
+                      dtype=POLARIZATION_TYPE)
+        setattr(Polarization,'lin_45_Z',pt)
 
     Properties
     ----------
-    X : PolarizationTuple
-        Linearly polarized X travelling in Z
-    Y : PolarizationTuple
-        Linearly polarized Y travelling in Z
-    X : PolarizationTuple
-        Linearly polarized travelling in Z
+    X : np.ndarray
+        Linearly polarized X travelling in Z-direction
+    Y : np.ndarray
+        Linearly polarized Y travelling in Z-direction
+    Z : np.ndarray
+        Linearly polarized travelling in X-direction
+    R : np.ndarray
+        Right circularly polarized light travelling in the Z-direction
+    L : np.ndarray
+        Left circularly polarized light travelling in the Z-direction
+    M : np.ndarray
+        Light polarized at the magic angle relative to the X-axis and
+        travelling in the Z-direction
+    U : np.ndarray
+        Unpolarized light travelling in the Z-direction
+    R_X : np.ndarray
+        Right circularly polarized light travelling in the X-direction
+    L_X : np.ndarray
+        Left circularly polarized light travelling in the X-direction
+    R_Y : np.ndarray
+        Right circularly polarized light travelling in the Y-direction
+    L_Y : np.ndarray
+        Left circularly polarized light travelling in the Y-direction
+    R_Z : np.ndarray
+        Right circularly polarized light travelling in the Z-direction
+    L_Z : np.ndarray
+        Left circularly polarized light travelling in the Z-direction
 
     Methods
     -------
@@ -125,76 +157,145 @@ class Polarization(MyOmdsDatasetObj):
     The default direction of travel for the light is the Z-axis, used
     in the single letter codes 'X', 'Y', 'L', 'R'.
 
+    References
+    ----------
+    See DOI: 10.1103/PhysRevA.90.023809 for a full 3D treatment.
     """
-    X = PolarizationTuple(name='X',
-                          Jones3=np.array([1, 0, 0]),
-                          cartesian=np.array([0, 0, 1]),
-                          angles=np.array([0, 0]),
-                          Stokes=np.array([1, 1, 0, 0]))
-    Y = PolarizationTuple(name='Y',
-                          Jones3=np.array([0, 1, 0]),
-                          cartesian=np.array([0, 0, 1]),
-                          angles=np.array([np.pi/2, 0]),
-                          Stokes=np.array([1, -1, 0, 0]))
-    Z = PolarizationTuple(name='Z',
-                          Jones3=np.array([0, 0, 1]),
-                          cartesian=np.array([1, 0, 0]),
-                          angles=np.array([0, 0]),
-                          Stokes=np.array([1, 1, 0, 0]))
-    U = PolarizationTuple(name='U',
-                          Jones3=None,
-                          cartesian=np.array([0, 0, 1]),
-                          angles=None,
-                          Stokes=np.array([1, 0, 0, 0]))
-    R = PolarizationTuple(name='R',
-                          Jones3=np.array([1, 1j, 0]),
-                          cartesian=np.array([0, 0, 1]),
-                          angles=np.array([0, -np.pi/2]),
-                          Stokes=np.array([1, 0, 0, 1]))
-    L = PolarizationTuple(name='R',
-                          Jones3=np.array([1, 1j, 0]),
-                          cartesian=np.array([0, 0, 1]),
-                          angles=np.array([0, np.pi/2]),
-                          Stokes=np.array([1, 0, 0, -1]))
-    R_X = PolarizationTuple(name='R_X',
-                            Jones3=np.array([0, 1, -1j]) / np.sqrt(2),
-                            cartesian=np.array([1, 0, 0]),
-                            angles=np.array([0, -np.pi/2]),
-                            Stokes=np.array([1, 0, 0, 1]))
-    L_X = PolarizationTuple(name='L_X',
-                            Jones3=np.array([0, 1, 1j]) / np.sqrt(2),
-                            cartesian=np.array([1, 0, 0]),
-                            angles=np.array([0, np.pi/2]),
-                            Stokes=np.array([1, 0, 0, -1]))
-    R_Y = PolarizationTuple(name='R_Y',
-                            Jones3=np.array([1, 0, -1j]) / np.sqrt(2),
-                            cartesian=np.array([1, 0, 0]),
-                            angles=np.array([0, -np.pi/2]),
-                            Stokes=np.array([1, 0, 0, 1]))
-    L_Y = PolarizationTuple(name='L_Y',
-                            Jones3=np.array([1, 0, 1j]) / np.sqrt(2),
-                            cartesian=np.array([1, 0, 0]),
-                            angles=np.array([0, np.pi/2]),
-                            Stokes=np.array([1, 0, 0, -1]))
-    R_Z = PolarizationTuple(name='R_Z',
-                            Jones3=np.array([1, -1j, 0]) / np.sqrt(2),
-                            cartesian=np.array([1, 0, 0]),
-                            angles=np.array([0, -np.pi/2]),
-                            Stokes=np.array([1, 0, 0, 1]))
-    L_Z = PolarizationTuple(name='L_Z',
-                            Jones3=np.array([1, 1j, 0]) / np.sqrt(2),
-                            cartesian=np.array([1, 0, 0]),
-                            angles=np.array([0, np.pi/2]),
-                            Stokes=np.array([1, 0, 0, -1]))
+    X = np.array([PolarizationTuple(name='X',
+                                    Jones3=np.array([1, 0, 0]),
+                                    cartesian=np.array([0, 0, 1]),
+                                    angles=np.array([0, 0]),
+                                    Stokes=np.array([1, 1, 0, 0]))],
+                 dtype=POLARIZATION_TYPE)
+    Y = np.array([PolarizationTuple(name='Y',
+                                    Jones3=np.array([0, 1, 0]),
+                                    cartesian=np.array([0, 0, 1]),
+                                    angles=np.array([np.pi/2, 0]),
+                                    Stokes=np.array([1, -1, 0, 0]))],
+                 dtype=POLARIZATION_TYPE)
+    Z = np.array([PolarizationTuple(name='Z',
+                                    Jones3=np.array([0, 0, 1]),
+                                    cartesian=np.array([1, 0, 0]),
+                                    angles=np.array([0, 0]),
+                                    Stokes=np.array([1, 1, 0, 0]))],
+                 dtype=POLARIZATION_TYPE)
+    M = np.array(
+        [PolarizationTuple(name='Z',
+                                Jones3=np.array([np.cos(MAGIC_ANGLE),
+                                                 np.sin(MAGIC_ANGLE), 0]),
+                                cartesian=np.array([0, 0, 1]),
+                                angles=np.array([MAGIC_ANGLE, 0]),
+                                Stokes=np.array([1,
+                                                 -1/3,
+                                                 0.9428090415820634,
+                                                 0]))],
+        dtype=POLARIZATION_TYPE)
+    U = np.array([PolarizationTuple(name='U',
+                                    Jones3=None,
+                                    cartesian=np.array([0, 0, 1]),
+                                    angles=None,
+                                    Stokes=np.array([1, 0, 0, 0]))],
+                 dtype=POLARIZATION_TYPE)
+    R = np.array([PolarizationTuple(name='R',
+                                    Jones3=np.array([1, 1j, 0]),
+                                    cartesian=np.array([0, 0, 1]),
+                                    angles=np.array([0, -np.pi/4]),
+                                    Stokes=np.array([1, 0, 0, 1]))],
+                 dtype=POLARIZATION_TYPE)
+    L = np.array([PolarizationTuple(name='R',
+                                    Jones3=np.array([1, 1j, 0]),
+                                    cartesian=np.array([0, 0, 1]),
+                                    angles=np.array([0, np.pi/4]),
+                                    Stokes=np.array([1, 0, 0, -1]))],
+                 dtype=POLARIZATION_TYPE)
+    R_X = np.array([PolarizationTuple(name='R_X',
+                                      Jones3=np.array([0, 1, -1j])/np.sqrt(2),
+                                      cartesian=np.array([1, 0, 0]),
+                                      angles=np.array([0, -np.pi/4]),
+                                      Stokes=np.array([1, 0, 0, 1]))],
+                   dtype=POLARIZATION_TYPE)
+    L_X = np.array([PolarizationTuple(name='L_X',
+                                      Jones3=np.array([0, 1, 1j])/np.sqrt(2),
+                                      cartesian=np.array([1, 0, 0]),
+                                      angles=np.array([0, np.pi/4]),
+                                      Stokes=np.array([1, 0, 0, -1]))],
+                   dtype=POLARIZATION_TYPE)
+    R_Y = np.array([PolarizationTuple(name='R_Y',
+                                      Jones3=np.array([1, 0, -1j])/np.sqrt(2),
+                                      cartesian=np.array([1, 0, 0]),
+                                      angles=np.array([0, -np.pi/4]),
+                                      Stokes=np.array([1, 0, 0, 1]))],
+                   dtype=POLARIZATION_TYPE)
+    L_Y = np.array([PolarizationTuple(name='L_Y',
+                                      Jones3=np.array([1, 0, 1j]) / np.sqrt(2),
+                                      cartesian=np.array([1, 0, 0]),
+                                      angles=np.array([0, np.pi/4]),
+                                      Stokes=np.array([1, 0, 0, -1]))],
+                   dtype=POLARIZATION_TYPE)
+    R_Z = np.array([PolarizationTuple(name='R_Z',
+                                      Jones3=np.array([1, -1j, 0])/np.sqrt(2),
+                                      cartesian=np.array([1, 0, 0]),
+                                      angles=np.array([0, -np.pi/4]),
+                                      Stokes=np.array([1, 0, 0, 1]))],
+                   dtype=POLARIZATION_TYPE)
+    L_Z = np.array([PolarizationTuple(name='L_Z',
+                                      Jones3=np.array([1, 1j, 0])/np.sqrt(2),
+                                      cartesian=np.array([1, 0, 0]),
+                                      angles=np.array([0, np.pi/4]),
+                                      Stokes=np.array([1, 0, 0, -1]))],
+                   dtype=POLARIZATION_TYPE)
 
     def __init__(self, pol_in):
         self.pol = getattr(self, pol_in)
 
+    @staticmethod
+    def jones_to_stokes(jones) -> np.ndarray:
+        """Convert 2D Jones vector to Stokes vector.
+        """
+        z = np.array(jones)
+        s0 = 1
+        s1 = np.abs(z[0])**2 - np.abs(z[1])**2
+        s2 = 2*np.real(z[0]*z[1].conj())
+        s3 = 2*np.imag(z[0]*z[1].conj())
+        return np.array([s0, s1, s2, s3])
+
+    @staticmethod
+    def angles_to_stokes(angles, intensity=1, p=1) -> np.ndarray:
+        """Convert polarization ellipse parameters to Stokes vector.
+        """
+        psi = angles[0]
+        chi = angles[1]
+        s = np.array([
+            intensity,
+            intensity*p*np.cos(2*psi)*np.cos(2*chi),
+            intensity*p*np.sin(2*psi)*np.cos(2*chi),
+            -intensity*p*np.sin(2*chi)
+        ])
+        return s
+
+    @staticmethod
+    def stokes_to_jones(S) -> Tuple[np.ndarray, float]:
+        # Calculate the degree of polarization
+        p = np.sqrt(S[1]**2 + S[2]**2 + S[3]**2) / S[1]
+
+        I = 1
+        Q = S[1] / (S[0] * p)
+        U = S[2] / (S[0] * p)
+        V = S[3] / (S[0] * p)
+
+        a = np.sqrt((1 + Q) / 2)
+        if a == 0:
+            b = 1
+        else:
+            b = U / (2 * a) - 1j * V / (2 * a)
+        j = np.sqrt(I * p) * np.array([a, b])
+        return j, p
+
     def _get_dataset(self) -> dict:
         return {'basename': 'pol',
-                'data': self.pol.Jones3,  # ToDo: make special type???
-                'dtype': self.pol.Jones3.dtype,
-                'attr': {'label': self.pol.name}}
+                'data': self.pol,
+                'dtype': POLARIZATION_TYPE,
+                'attr': {'label': self.pol[0]}}
 
 
 class Axis(MyOmdsDatasetObj):
@@ -386,6 +487,7 @@ class OutputterHDF5(Outputter):
             process_item(obj_in)  # recursively process input (depth first)
 
 
+# below here is testing and debugging
 t = np.arange(32, dtype=float)
 opts = {'fftshift': True}
 dim = Axis(t, 'fs', options=opts)
@@ -417,12 +519,11 @@ with h5py.File(filename, 'r') as f:
 
 pol = Polarization('X')
 pprint(pol)
-pprint(pol.pol.name)
-# ppol = [Polarization.X, Polarization.X]
+pprint(pol.pol)
 o.output([pol, pol], filename, access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
-    # logger.debug(pformat(f['R1'].attrs.items()))
+    logger.debug(pformat(f['pol1'].attrs.items()))
 
 s = Spectrum()
 o.output(s, filename, access_mode='a')
@@ -430,5 +531,6 @@ with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['R1'].attrs.items()))
 
-
+logger.debug(Polarization.angles_to_stokes([MAGIC_ANGLE, 0]))
+pprint(Polarization.angles_to_stokes([MAGIC_ANGLE, 0])[2])
 # --- last line
