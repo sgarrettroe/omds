@@ -7,7 +7,7 @@ import scipy.constants as constants
 import h5py
 from collections import defaultdict, namedtuple
 from collections.abc import Iterable
-from enum import StrEnum, auto
+from enum import Enum
 import logging
 from pprint import pformat
 from typing import Tuple
@@ -25,12 +25,43 @@ logger = logging.getLogger('omds.atomic_data_draft')
 logger.setLevel(logging.DEBUG)
 
 
-class Domain(StrEnum):
-    """Indicator of time domain or frequency domain data.
+class UNITS(Enum):
+    """ Load units and conversion factors from QUDT. But I don't
+    know how to do that yet! For now use scipy.constants.
+    """
+    # ToDo: figure out how to scrape URIs using rdflib
+    # ToDo: add units eV, atomic units, what else?
+    # Time
+    AS = constants.atto  # note clash of SI "as" with keyword "as"
+    ATTOSECONDS = constants.atto
+    FS = constants.femto
+    PS = constants.pico
+    NS = constants.nano
+    US = constants.micro
+    MS = constants.milli
+    S = 1
+    # Frequency
+    HZ = 1
+    THZ = constants.tera
+    RAD_PER_SEC = 2 * constants.pi
+    CM_1 = constants.c / constants.centi
+    INV_CM = constants.c / constants.centi
+    PER_CM = constants.c / constants.centi
+    WAVENUMBERS = constants.c / constants.centi
 
-    An StrEnum can be tested with `is` or `==`. """
-    TIME = auto()
-    FREQUENCY = auto()
+
+class UNIT_TYPE(set, Enum):
+    TIME_UNITS = {UNITS.ATTOSECONDS,
+                  UNITS.FS,
+                  UNITS.PS,
+                  UNITS.NS,
+                  UNITS.US,
+                  UNITS.MS,
+                  UNITS.S}
+    FREQUENCY_UNITS = {UNITS.HZ,
+                       UNITS.THZ,
+                       UNITS.RAD_PER_SEC,
+                       UNITS.INV_CM}
 
 
 class MyOmdsDatasetObj:
@@ -274,14 +305,14 @@ class Polarization(MyOmdsDatasetObj):
         return s
 
     @staticmethod
-    def stokes_to_jones(S) -> Tuple[np.ndarray, float]:
+    def stokes_to_jones(s) -> Tuple[np.ndarray, float]:
         # Calculate the degree of polarization
-        p = np.sqrt(S[1]**2 + S[2]**2 + S[3]**2) / S[1]
+        p = np.sqrt(s[1]**2 + s[2]**2 + s[3]**2) / s[1]
 
         I = 1
-        Q = S[1] / (S[0] * p)
-        U = S[2] / (S[0] * p)
-        V = S[3] / (S[0] * p)
+        Q = s[1] / (s[0] * p)
+        U = s[2] / (s[0] * p)
+        V = s[3] / (s[0] * p)
 
         a = np.sqrt((1 + Q) / 2)
         if a == 0:
@@ -303,41 +334,32 @@ class Axis(MyOmdsDatasetObj):
     A time or frequency axis object.
     """
     def __init__(self, x: np.ndarray,
-                 units: str,
-                 current_domain: Domain = Domain.TIME,
+                 units,
+                 defaults=None,
                  options=None):
         self.x = x
         self.units = units
-        self.current_domain = current_domain
-        self.time: np.ndarray  # ToDo: decide to keep both time and freq internally? or recalculate?
-        self.time_units: str
-        self.frequency: np.ndarray
-        self.frequency_units: str
-        self.known_unit_table = {}
+        self.defaults = {
+            'time_units': UNITS.FS,
+            'frequency_units': UNITS.INV_CM,
+        }
         self.options = {
-            'time_units': 'fs',
-            'frequency_units': 'cm-1',
             'zeropadded_length': 2*len(self.x),
             'n_undersampling': 0,
             'fftshift': False,
         }
+
+        if defaults is None:
+            pass
+        else:
+            self.defaults |= defaults
+
         if options is None:
             pass
         else:
             self.options |= options
 
-        self.load_known_units(None)
-
-        if current_domain is Domain.TIME:
-            self.time = self.x
-            self.time_units = self.units
-            self.frequency_units = self.options['frequency_units']
-        else:
-            self.frequency = self.x
-            self.frequency_units = self.units
-            self.time_units = self.options['time_units']
-
-    def t_to_w(self):
+    def t_to_w(self, frequency_units=None):
         """
         Convert time axis to frequency axis.
 
@@ -345,9 +367,13 @@ class Axis(MyOmdsDatasetObj):
         Returns: None
 
         """
-        tu = self.known_unit_table['time_units']
-        fu = self.known_unit_table['frequency_units']
-        conversion = tu[self.units] * fu[self.frequency_units]
+        tu = self.units
+        if frequency_units is None:
+            fu = self.defaults['frequency_units']
+        else:
+            fu = frequency_units
+
+        conversion = tu.value * fu.value
 
         n_t = self.options['zeropadded_length']
         dt = self.x[1] - self.x[0]
@@ -360,44 +386,31 @@ class Axis(MyOmdsDatasetObj):
             right = w[ind:] - fs
             w = np.concatenate((right, left), 0)
         self.x = w
-        self.units = self.frequency_units
+        self.units = frequency_units
         return
 
-    def w_to_t(self):
-        pass
+    def w_to_t(self, time_units=None):
+        fu = self.units
+        if time_units is None:
+            tu = self.defaults['time_units']
+        else:
+            tu = time_units
+
+        conversion = tu.value * fu.value
+
+        logger.error('Frequency to time not yet implemented')
+        raise NotImplemented
 
     def fft_axis(self):
-        if self.current_domain is Domain.TIME:
+        if self.units in UNIT_TYPE.TIME_UNITS:
             self.t_to_w()
 
-        if self.current_domain is Domain.FREQUENCY:
+        if self.units in UNIT_TYPE.FREQUENCY_UNITS:
             self.w_to_t()
 
     def unit_conversion(self, new_units):
         # change units and calculate the unit conversion on the data
-        pass
-
-    def load_known_units(self, uri_list=None):
-        """ Load units and conversion factors from QUDT. But I don't
-        know how to do that yet! For now use scipy.constants.
-        """
-        # ToDo: figure out how to scrape URIs using rdflib
-        # ToDo: add units eV, atomic units, what else?
-        if uri_list is None:
-            self.known_unit_table = {
-                'time_units': {
-                    'fs': constants.femto,
-                    'ps': constants.pico,
-                    's': 1,
-                        },
-                'frequency_units': {
-                    'Hz': 1,
-                    'THz': constants.tera,
-                    'rad_per_sec': 2*constants.pi,
-                    'cm-1': constants.c/constants.centi,
-                    'wavenumbers': constants.c/constants.centi,
-                }
-            }
+        raise NotImplemented
 
     def output(self):
         # print axis and label in some nice way
@@ -407,7 +420,7 @@ class Axis(MyOmdsDatasetObj):
         d = {'basename': 'x',
              'data': self.x,
              'dtype': self.x.dtype,
-             'attr': {'units': self.units} | self.options}
+             'attr': {'units': self.units.name} | self.options}
         return d
 
 
@@ -490,7 +503,7 @@ class OutputterHDF5(Outputter):
 # below here is testing and debugging
 t = np.arange(32, dtype=float)
 opts = {'fftshift': True}
-dim = Axis(t, 'fs', options=opts)
+dim = Axis(t, UNITS.FS, options=opts)
 
 filename = 'tmp.h5'
 # try to clean up from last time
@@ -525,8 +538,8 @@ with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['pol1'].attrs.items()))
 
-s = Spectrum()
-o.output(s, filename, access_mode='a')
+spec = Spectrum()
+o.output(spec, filename, access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['R1'].attrs.items()))
