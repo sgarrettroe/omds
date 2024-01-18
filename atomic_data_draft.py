@@ -39,7 +39,7 @@ class UNITS(Enum):
     NS = constants.nano
     US = constants.micro
     MS = constants.milli
-    S = 1
+S = 1
     # Frequency
     HZ = 1
     THZ = constants.tera
