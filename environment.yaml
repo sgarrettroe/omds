@@ -26,3 +26,5 @@ dependencies:
         - scidata
         - scidatalib
         - globus-sdk
+        - pyqudt
+
