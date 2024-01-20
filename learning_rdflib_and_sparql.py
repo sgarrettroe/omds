@@ -50,19 +50,22 @@ for row in qres:
     pprint(f"{row.x} val {row.y}")
 
 # trying to get just one
+name = 'SEC'
 qry = """
 PREFIX unit: <http://qudt.org/vocab/unit/> 
 PREFIX qudt: <http://qudt.org/schema/qudt/>
 PREFIX sou: <http://qudt.org/vocab/sou/>
 PREFIX quantitykind: <http://qudt.org/vocab/quantitykind/> 
 
-SELECT ?y
+SELECT ?conversionMultiplier ?symbol ?label ?
 WHERE {
-    unit:SEC qudt:conversionMultiplier ?y .
+    unit:SEC qudt:conversionMultiplier ?conversionMultiplier .
+    unit:SEC qudt:symbol ?symbol .
 }"""
+
 qres = g.query(qry)
 pprint(f"Found {len(qres)} query matches")
 for row in qres:
-    pprint(f"unit:SEC val {row.y}")
+    pprint(f"unit:SEC val {row.conversionMultiplier}")
 
 # no atto or femto seconds!!!!
