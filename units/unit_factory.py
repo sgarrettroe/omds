@@ -53,16 +53,15 @@ class UnitFactory:
         Create an instance of the unit factory.
         """
         QUDT = rdflib.Namespace("http://qudt.org/schema/qudt/")
-        UNIT = rdflib.Namespace("https://qudt.org/2.1/vocab/unit")
-        SOU = rdflib.Namespace("http://qudt.org/vocab/sou/")
+        UNIT = rdflib.Namespace("https://qudt.org/vocab/unit/")
+        QUANTITY_KIND = rdflib.Namespace(
+            "https://qudt.org/vocab/quantitykind/")
 
-        g = rdflib.Graph()
-        g.bind("qudt", QUDT)
-        g.bind("sou", SOU)
-        g.bind("unit", UNIT)
+        g = rdflib.Graph(bind_namespaces="rdflib")
+        g.bind("qudt:", QUDT)
+        g.bind("unit:", UNIT)
+        g.bind("quantitykind:", QUANTITY_KIND)
 
-        # units = rdflib.URIRef("https://qudt.org/2.1/vocab/unit")
-        # print(units)
         g.parse("https://qudt.org/2.1/vocab/unit")
 
         self.g = g
