@@ -5,7 +5,7 @@ context: https://stuchalk.github.io/scidata/contexts/scidata.jsonld
 uid: a_unique_identifier_goes_here
 docid: a_different_identifier_goes_here
 version: 1
-base: 'http://pitt.edu/~sgr/a_unique_identifier_goes_here'
+base: 'http://pitt.edu/~sgr/a_unique_identifier_goes_here/'
 namespaces: {'chm': "https://stuchalk.github.io/scidata/ontology/chemical.owl#",
              'sub': 'https://stuchalk.github.io/scidata/ontology/substance.owl#',
              'gb': 'https://goldbook.iupac.org/'}
