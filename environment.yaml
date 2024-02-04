@@ -19,6 +19,7 @@ dependencies:
     - scipy
     - jupyter
     - pyyaml
+    - html5lib
     - conda-forge::rdflib
     - conda-forge::h5py
     - pip
@@ -26,3 +27,5 @@ dependencies:
         - scidata
         - scidatalib
         - globus-sdk
+        - pyqudt
+
