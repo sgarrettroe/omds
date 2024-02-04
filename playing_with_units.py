@@ -62,14 +62,14 @@ qres = g.query(qry)
 pprint(len(qres))
 unit_dict = {}
 for row in qres:
-    n = row.name
-    cm = row.conversionMultiplier
-    co = row.conversionOffset if row.conversionOffset else 0
-    s = row.symbol
-    qk = row.quantityKind
-    l = row.label
-    r_iri = namespaces['unit'][n].n3()
-    qk_iri = namespaces['quantitykind'][row.quantityKind].n3()
+    n = row.name.n3(namespace_manager=g.namespace_manager)
+    cm = row.conversionMultiplier.n3(namespace_manager=g.namespace_manager)
+    co = row.conversionOffset.n3(namespace_manager=g.namespace_manager) if row.conversionOffset else 0
+    s = row.symbol.n3(namespace_manager=g.namespace_manager)
+    qk = row.quantityKind.n3(namespace_manager=g.namespace_manager)
+    l = row.label.n3(namespace_manager=g.namespace_manager)
+    r_iri = row.name.n3()
+    qk_iri = row.quantityKind.n3()
     unit_dict[n] = Unit(resource_iri=r_iri,
                            label=l,
                            symbol=s,
@@ -78,4 +78,4 @@ for row in qres:
 
 pprint(len(unit_dict))
 
-unit_dict['SEC'].label
+pprint(unit_dict['unit:SEC'].label)
