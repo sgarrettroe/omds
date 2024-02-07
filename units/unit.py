@@ -33,4 +33,4 @@ class Unit:
     multiplier: Multiplier = dataclasses.field(default_factory=Multiplier)
 
     def __repr__(self) -> str:
-        return str(self.abbreviation)
+        return str(self.label)
