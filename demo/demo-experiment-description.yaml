@@ -45,6 +45,8 @@ evaluation: "experiment"
 # "measurement" is a measurement type, like FTIR, etc
 #
 # should we propose changes to Ontobee https://ontobee.org/ontology/CHMO?iri=http://purl.obolibrary.org/obo
+# https://www.ebi.ac.uk/ols4/search?q=infrared&ontology=chmo
+#
 # transmission spectroscopy = obo:CHMO_0000938
 # FTIR = obo:CHMO_0000636
 # third-order spectroscopy in box-car geometry ("Four-wave mixing") = obo:CHMO_0002100
