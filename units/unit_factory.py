@@ -25,6 +25,7 @@ from typing import Tuple
 import rdflib
 
 from .unit import Unit
+from .multiplier import Multiplier
 
 # set up logging
 import logging
@@ -56,13 +57,19 @@ class UnitFactory:
         UNIT = rdflib.Namespace("https://qudt.org/vocab/unit/")
         QUANTITY_KIND = rdflib.Namespace(
             "https://qudt.org/vocab/quantitykind/")
-
+        CONSTANT = rdflib.Namespace("https://qudt.org/vocab/constant/")
+        OMDS = rdflib.Namespace(
+            "http://www.semanticweb.org/sgr/ontologies/2024/1/omds/")
         g = rdflib.Graph(bind_namespaces="rdflib")
         g.bind("qudt:", QUDT)
         g.bind("unit:", UNIT)
         g.bind("quantitykind:", QUANTITY_KIND)
+        g.bind("constant:", CONSTANT)
+        g.bind(":", OMDS)
 
         g.parse("https://qudt.org/2.1/vocab/unit")
+        g.parse("https://qudt.org/2.1/vocab/constant")
+        g.parse("/Users/SGR/GitHub/omds/omds.ttl")
 
         self.g = g
 
@@ -98,35 +105,53 @@ class UnitFactory:
 
         SELECT ?conversionMultiplier ?conversionOffset ?symbol ?quantityKind ?label 
         WHERE {{
-            unit:{name} qudt:conversionMultiplier ?conversionMultiplier .
-            unit:{name} qudt:symbol ?symbol .
-            unit:{name} qudt:hasQuantityKind ?quantityKind .
-            unit:{name} rdfs:label ?label .
-            OPTIONAL {{ unit:{name} qudt:conversionOffset ?conversionOffset }}
+            {name} qudt:conversionMultiplier ?conversionMultiplier .
+            {name} qudt:symbol ?symbol .
+            {name} qudt:hasQuantityKind ?quantityKind .
+            {name} rdfs:label ?label .
+            OPTIONAL {{ {name} qudt:conversionOffset ?conversionOffset }}
             FILTER (lang(?label) = 'en')
         }}"""
 
         qres = cls._get_instance().g.query(qry)
         logger.debug(f"Found {len(qres)} query matches")
+        logger.debug(f"Taking the first query match.")
+        if len(qres) == 0:
+            raise ValueError(f'Found no units matching {name}')
+        u = None
         for row in qres:
             logger.debug(
-                f"unit:{name} mult {row.conversionMultiplier} offset {row.conversionOffset if row.conversionOffset else 0} label {row.label} symb {row.symbol} kind {row.quantityKind}")
-
-        # resource_iri: str
-        # label: str = dataclasses.field(default_factory=str)
-        # abbreviation: str = dataclasses.field(default_factory=str)
-        # symbol: str = dataclasses.field(default_factory=str)
-        # type_iri: str = dataclasses.field(default_factory=str)
-        # multiplier: Multiplier = dataclasses.field(default_factory=Multiplier)
-        row = qres[0]
-        return Unit(
-            resource_iri='http://qudt.org/vocab/unit/' + name,
-            symbol=row.symbol,
-            label=row.label,
-            multiplier=Multiplier(offset=row.conversionOffset,
-                                  multiplier=row.conversionMultiplier),
-            quantitykind_iri=row.quantityKind
+                f"{name} mult {row.conversionMultiplier} offset {row.conversionOffset if row.conversionOffset else 0} label {row.label} symb {row.symbol} kind {row.quantityKind}")
+            u = Unit(
+                resource_iri=name,
+                symbol=row.symbol,
+                label=row.label,
+                multiplier=Multiplier(offset=float(row.conversionOffset.toPython()) if row.conversionOffset else 0.0,
+                                      multiplier=float(row.conversionMultiplier.toPython())),
+                quantitykind_iri=row.quantityKind.n3(namespace_manager=cls._get_instance().g.namespace_manager)
             )
+
+        return u
+
+    @classmethod
+    def query(cls, qry: str):
+        return cls._get_instance().g.query(qry)
+
+    @classmethod
+    def _subjects(cls, *args):
+        return cls._get_instance().g.subjects(*args)
+
+    @classmethod
+    def _objects(cls, *args):
+        return cls._get_instance().g.objects(*args)
+
+    @classmethod
+    def _predicates(cls, *args):
+        return cls._get_instance().g.predicates(*args)
+
+    @classmethod
+    def namespace_manager(cls):
+        return cls._get_instance().g.namespace_manager
 
 
     @classmethod
@@ -138,13 +163,6 @@ class UnitFactory:
         :return: The unit, or None on error
         """
         return cls._get_instance()._get_unit(resource_iri)
-
-    @classmethod
-    def get_qudt(cls, unit: str) -> Unit:
-        """
-        Shorthand for getting a QUDT unit like Joule (`J`) or meter-squared (`M2`)
-        """
-        return cls.get_unit('http://qudt.org/vocab/unit/' + unit)
 
     def _get_unit(self, resource_iri: str) -> Unit:
         """
