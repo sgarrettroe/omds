@@ -9,10 +9,6 @@ QUDT = rdflib.Namespace("http://qudt.org/schema/qudt/")
 UNIT = rdflib.Namespace("https://qudt.org/vocab/unit/")
 QUANTITY_KIND = rdflib.Namespace("https://qudt.org/vocab/quantitykind/")
 CONSTANT = rdflib.Namespace("https://qudt.org/vocab/constant/")
-namespaces = {'qudt': QUDT,
-              'unit': UNIT,
-              'quantitykind': QUANTITY_KIND,
-              'constant': CONSTANT}
 g = rdflib.Graph(bind_namespaces="rdflib")
 g.bind("qudt:", QUDT)
 g.bind("unit:", UNIT)
@@ -45,11 +41,6 @@ for name in l:
         offset { row.conversionOffset if row.conversionOffset else 0} \
         label {row.label} symb {row.symbol} kind {row.quantityKind}")
 
-        pprint(namespaces['unit'][name].n3())
-        pprint(namespaces['quantitykind'][row.quantityKind].n3())
-
-        #d[name] = Unit(f'{UNIT/{row.name}',label=row.label,symbol=row.symbol,quantitykind_iri=f'{quantitykind}/{row.quantityKind}')
-
 QK_FILTER = """FILTER (
         ?quantityKind = quantitykind:Action || 
         ?quantityKind = quantitykind:Dimensionless || 
@@ -61,7 +52,8 @@ QK_FILTER = """FILTER (
         ?quantityKind = quantitykind:MolarMass ||
         ?quantityKind = quantitykind:Speed ||
         ?quantityKind = quantitykind:Time || 
-        ?quantityKind = quantitykind:Temperature
+        ?quantityKind = quantitykind:Temperature ||
+        ?quantityKind = quantitykind:Volume
         )"""
 qry = f"""
     SELECT ?name ?conversionMultiplier ?conversionOffset ?symbol ?quantityKind ?label 
@@ -127,7 +119,6 @@ qry = f"""
         }}
     }}
 """
-#        {QK_FILTER}
 
 print(qry)
 qres = g.query(qry)
@@ -143,3 +134,4 @@ for row in qres:
 pprint(unit_dict)
 pprint(constant_dict)
 print("done")
+
