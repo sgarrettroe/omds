@@ -29,25 +29,25 @@
 #    Object Properties
 #################################################################
 
-###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds#recipeConvertsTo
-:recipeConvertsTo rdf:type owl:ObjectProperty ;
-                  rdfs:domain :ConversionRecipe ;
+###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds#relationConvertsTo
+:relationConvertsTo rdf:type owl:ObjectProperty ;
+                  rdfs:domain :ConversionRelation ;
                   rdfs:range qudt:QuantityKind .
 
 
-###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/recipeConvertsFrom
-:recipeConvertsFrom rdf:type owl:ObjectProperty ;
-                    rdfs:domain :ConversionRecipe ;
+###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsFrom
+:relationConvertsFrom rdf:type owl:ObjectProperty ;
+                    rdfs:domain :ConversionRelation ;
                     rdfs:range qudt:QuantityKind .
 
 
-###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/recipeReplacement
-:recipeReplacement rdf:type owl:ObjectProperty ;
-                   rdfs:domain :ConversionRecipe ;
-                   rdfs:range :RecipeReplacement .
+###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationReplacement
+:relationReplacement rdf:type owl:ObjectProperty ;
+                   rdfs:domain :ConversionRelation ;
+                   rdfs:range :RelationReplacement .
 
 :expressionReplacementValue rdf:type owl:ObjectProperty ;
-                   rdfs:domain :RecipeReplacement ;
+                   rdfs:domain :RelationReplacement ;
                    rdfs:range  qudt:ConstantValue .
 
 #################################################################
@@ -57,7 +57,7 @@
 ###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression
 :expression rdf:type owl:DatatypeProperty ;
             rdfs:subPropertyOf owl:topDataProperty ;
-            rdfs:domain :ConversionRecipe ;
+            rdfs:domain :ConversionRelation ;
             rdfs:range xsd:string ;
             rdfs:comment "An expression for how a conversion is to be calculated"@en .
 
@@ -71,21 +71,21 @@
 ###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionMatlab
 :expressionMatlab rdf:type owl:DatatypeProperty ;
                   rdfs:subPropertyOf :expression ;
-                  rdfs:domain :ConversionRecipe ;
+                  rdfs:domain :ConversionRelation ;
                   rdfs:range xsd:string .
 
 
 ###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionPython
 :expressionPython rdf:type owl:DatatypeProperty ;
                   rdfs:subPropertyOf :expression ;
-                  rdfs:domain :ConversionRecipe ;
+                  rdfs:domain :ConversionRelation ;
                   rdfs:range xsd:string .
 
 
 ###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementName
 :expressionReplacementName rdf:type owl:DatatypeProperty ;
                            rdfs:subPropertyOf owl:topDataProperty ;
-                           rdfs:domain :RecipeReplacement ;
+                           rdfs:domain :RelationReplacement ;
                            rdfs:range xsd:string ;
                            rdfs:comment "The name of the variable in the expression to be replaced with the replacement value." .
 
@@ -93,7 +93,7 @@
 ###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementValue
 #:expressionReplacementValue rdf:type owl:DatatypeProperty ;
 #                            rdfs:subPropertyOf owl:topDataProperty ;
-#                            rdfs:domain :RecipeReplacement ;
+#                            rdfs:domain :RelationReplacement ;
 #                           rdfs:range xsd:anyURI ;
 #                            rdfs:comment "IRI of the value to be inserted into the expression"@en .
 
@@ -106,13 +106,13 @@
 qudt:QuantityKind rdf:type owl:Class .
 
 
-###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRecipe
-:ConversionRecipe rdf:type owl:Class ;
-                  rdfs:comment "A recipe to convert from one set of units to another" .
+###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation
+:ConversionRelation rdf:type owl:Class ;
+                  rdfs:comment "A relation to convert from one set of units to another" .
 
 
-###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/RecipeReplacement
-:RecipeReplacement rdf:type owl:Class .
+###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/RelationReplacement
+:RelationReplacement rdf:type owl:Class .
 
 
 #################################################################
@@ -133,10 +133,10 @@ quantitykind:Length rdf:type owl:NamedIndividual , qudt:QuantityKind .
 
 ###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight
 :convertWavelengthOfLightToEnergyOfLight rdf:type owl:NamedIndividual ,
-                                                  :ConversionRecipe ;
-                                         :recipeConvertsTo quantitykind:Energy ;
-                                         :recipeConvertsFrom quantitykind:Length ;
-                                         :recipeReplacement :replacementPlanckConstant ,
+                                                  :ConversionRelation ;
+                                         :relationConvertsTo quantitykind:Energy ;
+                                         :relationConvertsFrom quantitykind:Length ;
+                                         :relationReplacement :replacementPlanckConstant ,
                                                             :replacementSpeedOfLight ;
                                          :expressionInputName "wavelength_of_light"^^xsd:anyURI ;
                                          :expressionMatlab "constant_value_planck_constant * constant_value_speed_of_light_vacuum / wavelength_of_light"^^xsd:string ;
@@ -145,10 +145,10 @@ quantitykind:Length rdf:type owl:NamedIndividual , qudt:QuantityKind .
 
 ###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight
 :convertWavelengthOfLightToFrequencyOfLight rdf:type owl:NamedIndividual ,
-                                                     :ConversionRecipe ;
-                                            :recipeConvertsTo quantitykind:Frequency ;
-                                            :recipeConvertsFrom quantitykind:Length ;
-                                            :recipeReplacement :replacementSpeedOfLight ;
+                                                     :ConversionRelation ;
+                                            :relationConvertsTo quantitykind:Frequency ;
+                                            :relationConvertsFrom quantitykind:Length ;
+                                            :relationReplacement :replacementSpeedOfLight ;
                                             :expression "constant_value_speed_of_light_vacuum / value_wavelength_of_light" ;
                                             :expressionInputName "value_wavelength_of_light" ;
                                             rdfs:comment "Conversion of Wavelength to Frequency in base SI units."@en .
@@ -156,7 +156,7 @@ quantitykind:Length rdf:type owl:NamedIndividual , qudt:QuantityKind .
 
 ###  http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementPlanckConstant
 :replacementPlanckConstant rdf:type owl:NamedIndividual ,
-                                    :RecipeReplacement ;
+                                    :RelationReplacement ;
                            :expressionReplacementName "constant_value_planck_constant" ;
                            :expressionReplacementValue constant:Value_PlanckConstant .
 
@@ -171,10 +171,10 @@ quantitykind:Length rdf:type owl:NamedIndividual , qudt:QuantityKind .
 #    Annotations
 #################################################################
 
-:expressionMatlab rdfs:comment "Matlab expression for the recipe" .
+:expressionMatlab rdfs:comment "Matlab expression for the relation" .
 
 
-:expressionPython rdfs:comment "Python expression for the recipe" .
+:expressionPython rdfs:comment "Python expression for the relation" .
 
 
 ###  Generated by the OWL API (version 4.5.26.2023-07-17T20:34:13Z) https://github.com/owlcs/owlapi
