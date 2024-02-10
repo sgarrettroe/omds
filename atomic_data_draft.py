@@ -25,6 +25,12 @@ logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 
 
+OMDS = {'ABSORPTIVE': 'omds:Absorptive',
+        'REPHASING': 'omds:Rephasing',
+        'NONREPHASING': 'omds:Nonrephasing',
+        'ABS': 'omds:AbsoluteValue',
+        }
+
 class UNITS(Enum):
     """ Load units and conversion factors from QUDT. But I don't
     know how to do that yet! For now use scipy.constants.
@@ -85,6 +91,8 @@ class MyOmdsDataseriesObj:
     _get_dataseries: dict
         Return the dataseries dictionary. Must be overridden by subclass.
     """
+    basename = ''
+
     @property
     def dataseries(self):
         return self._get_dataseries()
@@ -192,6 +200,7 @@ class Polarization(MyOmdsDataseriesObj):
     ----------
     See DOI: 10.1103/PhysRevA.90.023809 for a full 3D treatment.
     """
+    basename = 'pol'
     X = np.array([PolarizationTuple(name='X',
                                     Jones3=np.array([1, 0, 0]),
                                     cartesian=np.array([0, 0, 1]),
@@ -323,7 +332,7 @@ class Polarization(MyOmdsDataseriesObj):
         return j, p
 
     def _get_dataseries(self) -> dict:
-        return {'basename': 'pol',
+        return {'basename': self.basename,
                 'data': self.pol,
                 'dtype': POLARIZATION_TYPE,
                 'attr': {'label': self.pol[0]}}
@@ -333,6 +342,8 @@ class Axis(MyOmdsDataseriesObj):
     """
     A time or frequency axis object.
     """
+    basename = 'x'
+
     def __init__(self, x: np.ndarray,
                  units,
                  defaults=None,
@@ -424,17 +435,58 @@ class Axis(MyOmdsDataseriesObj):
         return d
 
 
-class Spectrum(MyOmdsDataseriesObj):
+class Response(MyOmdsDataseriesObj):
+    basename = 'R'
+
     def __init__(self):
         self.data = np.zeros((3, 3, 3))
 
     def _get_dataseries(self) -> dict:
-        return {'basename': 'R',
+        return {'basename': self.basename,
                 'data': self.data,
                 'dtype': self.data.dtype,
                 'attr': {'units': 'mOD',
+                         'order': self.data.ndim,
+                         'kind': OMDS['ABSORPTIVE'],
                          }
                 }
+
+
+class Spectrum:
+    basename = 'spectrum'
+    def __init__(self, responses=None, axes=None, pols=None):
+        if responses is None:
+            responses = []
+        if axes is None:
+            axes = []
+        if pols is None:
+            pol = []
+
+        # should add checking here
+
+        self.response = response
+        self.axes = axes
+        self.pols = pols
+
+    @property
+    def datagroup(self) -> list:
+        out = [self.response, *self.axes, *self.pols]
+        # if isinstance(self.response, Iterable):
+        #     for r in self.response:
+        #         out.append(r._get_dataseries())
+        # else:
+        #     out.append(self.response._get_dataseries())
+        # if isinstance(self.axes, Iterable):
+        #     for a in self.axes:
+        #         out.append(a._get_dataseries())
+        # else:
+        #     out.append(self.axes._get_dataseries())
+        # if isinstance(self.pol, Iterable):
+        #     for p in self.pol:
+        #         out.append(p._get_dataseries())
+        # else:
+        #     out.append(self.pol._get_dataseries())
+        return out
 
 
 class Outputter:
@@ -533,17 +585,33 @@ with h5py.File(filename, 'r') as f:
 pol = Polarization('X')
 pprint(pol)
 pprint(pol.pol)
-o.output([pol, pol], filename, access_mode='a')
+o.output([pol, pol, pol, pol], filename, access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['pol1'].attrs.items()))
 
-spec = Spectrum()
-o.output(spec, filename, access_mode='a')
+resp = Response()
+o.output(resp, filename, access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['R1'].attrs.items()))
 
 logger.debug(Polarization.angles_to_stokes([MAGIC_ANGLE, 0]))
 pprint(Polarization.angles_to_stokes([MAGIC_ANGLE, 0])[2])
+
+# moving toward 2D spectrum
+t1 = np.arange(3, dtype=float)
+t2 = np.arange(3, dtype=float)
+t3 = np.arange(3, dtype=float)
+opts = {'fftshift': True}
+x1 = Axis(t1, UNITS.FS, options=opts)
+x2 = Axis(t2, UNITS.FS, options=opts)
+x3 = Axis(t3, UNITS.FS, options=opts)
+
+spec = Spectrum(responses=[resp], axes=[x1, x2, x3],
+                pols=[pol, pol, pol, pol])
+filename = 'tmp2.h5'
+print(len(spec.datagroup))
+print(isinstance(spec.datagroup,Iterable))
+o.output(spec.datagroup, filename, access_mode='a',root='/spectrum')
 # --- last line
