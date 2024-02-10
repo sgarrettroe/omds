@@ -39,7 +39,7 @@ class UNITS(Enum):
     NS = constants.nano
     US = constants.micro
     MS = constants.milli
-S = 1
+    S = 1
     # Frequency
     HZ = 1
     THZ = constants.tera
@@ -489,7 +489,7 @@ class OutputterHDF5(Outputter):
                 root_basename = root.lstrip('/') + dset["basename"]
                 name_counts[root_basename] += 1
                 full_name = f'{root_basename}{name_counts[root_basename]}'
-                h5dset = f.create_dataseries(full_name,
+                h5dset = f.create_dataset(full_name,
                                           dset['data'].shape,
                                           dtype=dset['dtype'],
                                           data=dset['data'])
