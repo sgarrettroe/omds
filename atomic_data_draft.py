@@ -64,17 +64,17 @@ class UNIT_TYPE(set, Enum):
                        UNITS.INV_CM}
 
 
-class MyOmdsDatasetObj:
+class MyOmdsDataseriesObj:
     """Base class that objects that output data should subclass.
 
-    The interface is `obj.dataset` which should return a dict of
+    The interface is `obj.dataseries` which should return a dict of
     {'data':val,'dtype':val,'attr':dict}. Subclasses must define
-    _get_dataset which must return that dict structure or list of them.
+    _get_dataseries which must return that dict structure or list of them.
 
     Properties
     ----------
-    dataset: dict
-        Dictionary that describes the dataset in the form
+    dataseries: dict
+        Dictionary that describes the dataseries in the form
         ``d = {'basename': <name>,
                'data': <data scalar or array>,
                'dtype': <data type string>,
@@ -82,15 +82,15 @@ class MyOmdsDatasetObj:
 
     Methods
     -------
-    _get_dataset: dict
-        Return the dataset dictionary. Must be overridden by subclass.
+    _get_dataseries: dict
+        Return the dataseries dictionary. Must be overridden by subclass.
     """
     @property
-    def dataset(self):
-        return self._get_dataset()
+    def dataseries(self):
+        return self._get_dataseries()
 
-    def _get_dataset(self) -> dict:
-        """Function that should be created to return a dataset
+    def _get_dataseries(self) -> dict:
+        """Function that should be created to return a dataseries
         dictionary or list of them."""
         raise NotImplementedError("Please Implement this method")
 
@@ -110,7 +110,7 @@ POLARIZATION_TYPE = np.dtype([('name', h5py.string_dtype()),
 MAGIC_ANGLE = np.arccos(np.sqrt(1/3))
 
 
-class Polarization(MyOmdsDatasetObj):
+class Polarization(MyOmdsDataseriesObj):
     """
     Collect information about the polarization of light.
 
@@ -180,7 +180,7 @@ class Polarization(MyOmdsDatasetObj):
 
     Methods
     -------
-    _get_dataset: dict
+    _get_dataseries: dict
         Return a dictionary to save the data
 
     Notes
@@ -322,14 +322,14 @@ class Polarization(MyOmdsDatasetObj):
         j = np.sqrt(I * p) * np.array([a, b])
         return j, p
 
-    def _get_dataset(self) -> dict:
+    def _get_dataseries(self) -> dict:
         return {'basename': 'pol',
                 'data': self.pol,
                 'dtype': POLARIZATION_TYPE,
                 'attr': {'label': self.pol[0]}}
 
 
-class Axis(MyOmdsDatasetObj):
+class Axis(MyOmdsDataseriesObj):
     """
     A time or frequency axis object.
     """
@@ -416,7 +416,7 @@ class Axis(MyOmdsDatasetObj):
         # print axis and label in some nice way
         pass
 
-    def _get_dataset(self) -> dict:
+    def _get_dataseries(self) -> dict:
         d = {'basename': 'x',
              'data': self.x,
              'dtype': self.x.dtype,
@@ -424,11 +424,11 @@ class Axis(MyOmdsDatasetObj):
         return d
 
 
-class Spectrum(MyOmdsDatasetObj):
+class Spectrum(MyOmdsDataseriesObj):
     def __init__(self):
         self.data = np.zeros((3, 3, 3))
 
-    def _get_dataset(self) -> dict:
+    def _get_dataseries(self) -> dict:
         return {'basename': 'R',
                 'data': self.data,
                 'dtype': self.data.dtype,
@@ -452,18 +452,18 @@ class OutputterHDF5(Outputter):
     """
     # default output mechanism, writes HDF5 file
     def output(self, obj_in, filename, root='/', access_mode='w') -> None:
-        """Output HDF5 file that saves the dataset or sets of them.
+        """Output HDF5 file that saves the dataseries or sets of them.
 
         Parameters
         ----------
-        obj_in : MyOmdsDatasetObj or list of MyOmdsDatasetObj
+        obj_in : MyOmdsDataseriesObj or list of MyOmdsDataseriesObj
             The input objects to be processed. They must have an
-            attribute dataset. Dataset must be a dictionary with keys
+            attribute dataseries. Dataseries must be a dictionary with keys
             "basename", "data", and "dtype".
         filename : str
             The name of the output file.
         root :
-            The base group of the dataset(s).
+            The base group of the dataseries(s).
         access_mode : {'w','a'}, optional
             The mode used to open the output file. The default is 'w',
             which overwrites and existing file.
@@ -477,7 +477,7 @@ class OutputterHDF5(Outputter):
         root = root.rstrip('/') + '/'
 
         # dictionary of how many times each basename, which is used to
-        # label datasets uniquely. returns an integer 0 for new keys.
+        # label dataseriess uniquely. returns an integer 0 for new keys.
         name_counts = defaultdict(int)
 
         def process_item(obj):
@@ -485,11 +485,11 @@ class OutputterHDF5(Outputter):
                 for this_obj in obj:
                     process_item(this_obj)
             else:
-                dset = obj.dataset
+                dset = obj.dataseries
                 root_basename = root.lstrip('/') + dset["basename"]
                 name_counts[root_basename] += 1
                 full_name = f'{root_basename}{name_counts[root_basename]}'
-                h5dset = f.create_dataset(full_name,
+                h5dset = f.create_dataseries(full_name,
                                           dset['data'].shape,
                                           dtype=dset['dtype'],
                                           data=dset['data'])
@@ -515,7 +515,7 @@ except FileNotFoundError:
 
 o = OutputterHDF5()
 
-# start a file with 3 dimension datasets (axes), some being nested
+# start a file with 3 dimension dataseries (axes), some being nested
 o.output([dim, [dim, dim]], filename)
 
 logger.debug(f'reading h5 file {filename}')
