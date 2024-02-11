@@ -493,7 +493,7 @@ class Spectrum:
         return out
 
     def __iter__(self):
-        return self._datagroup.__iter__()  # ToDo: Verify this is right!!!
+        return self._datagroup.__iter__()
 
     def __next__(self):
         return self._datagroup.__next__()
