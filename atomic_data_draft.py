@@ -454,6 +454,7 @@ class Response(MyOmdsDataseriesObj):
 
 class Spectrum:
     basename = 'spectrum'
+
     def __init__(self, responses=None, axes=None, pols=None):
         if responses is None:
             responses = []
@@ -464,13 +465,16 @@ class Spectrum:
 
         # should add checking here
 
-        self.response = response
+        self.response = responses
         self.axes = axes
         self.pols = pols
 
+        self._datagroup = self._makedatagroup
+        self._idx = 0
+
     @property
-    def datagroup(self) -> list:
-        out = [self.response, *self.axes, *self.pols]
+    def _makedatagroup(self) -> list:
+        out = [*self.response, *self.axes, *self.pols]
         # if isinstance(self.response, Iterable):
         #     for r in self.response:
         #         out.append(r._get_dataseries())
@@ -488,6 +492,11 @@ class Spectrum:
         #     out.append(self.pol._get_dataseries())
         return out
 
+    def __iter__(self):
+        return self._datagroup.__iter__()  # ToDo: Verify this is right!!!
+
+    def __next__(self):
+        return self._datagroup.__next__()
 
 class Outputter:
     """Base class for output functionality. All output methods should
@@ -529,7 +538,7 @@ class OutputterHDF5(Outputter):
         root = root.rstrip('/') + '/'
 
         # dictionary of how many times each basename, which is used to
-        # label dataseriess uniquely. returns an integer 0 for new keys.
+        # label dataseries uniquely. returns an integer 0 for new keys.
         name_counts = defaultdict(int)
 
         def process_item(obj):
@@ -611,7 +620,20 @@ x3 = Axis(t3, UNITS.FS, options=opts)
 spec = Spectrum(responses=[resp], axes=[x1, x2, x3],
                 pols=[pol, pol, pol, pol])
 filename = 'tmp2.h5'
-print(len(spec.datagroup))
-print(isinstance(spec.datagroup,Iterable))
-o.output(spec.datagroup, filename, access_mode='a',root='/spectrum')
+try:
+    os.remove(filename)
+    logger.info(f'removing {filename}')
+except FileNotFoundError:
+    pass
+
+print(len(spec._datagroup))
+print(isinstance(spec._datagroup,Iterable))
+#o.output(spec._datagroup, filename, access_mode='a',root='/spectrum')
+o.output(spec, filename, access_mode='a',root='/spectrum')
+
+print('um')
+for ii in spec:
+    print(ii)
+
+print('done')
 # --- last line
