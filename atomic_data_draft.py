@@ -24,12 +24,21 @@ logging.basicConfig(
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 
-
-OMDS = {'ABSORPTIVE': 'omds:Absorptive',
-        'REPHASING': 'omds:Rephasing',
-        'NONREPHASING': 'omds:Nonrephasing',
-        'ABS': 'omds:AbsoluteValue',
-        }
+OMDS = {}
+OMDS['kind'] = {'ABSORPTIVE': 'omds:Absorptive',
+                'DISPERSIVE': 'omds:Dispersive',
+                'REPHASING': 'omds:Rephasing',
+                'NONREPHASING': 'omds:Nonrephasing',
+                'ABS': 'omds:AbsoluteValue',
+                'MIXED': 'omds:MixedKind',
+                }
+OMDS['scale'] = {'mOD': 'omds:ScaleMilliOD',
+                 'uOD': 'omds:ScaleMicroOD',
+                 'OD': 'omds:ScaleOD',
+                 '%T': 'omds:ScalePercentTransmission',
+                 'OD/sqrt(Hz)': 'omds:ScaleOD-SQRT-SEC',
+                 'OD/sqrt(cm-1)': 'omds:ScaleOD-SQRT-CentiM',  #https://doi.org/10.1021/acs.analchem.2c04287
+                 }
 
 class UNITS(Enum):
     """ Load units and conversion factors from QUDT. But I don't
@@ -81,6 +90,7 @@ class MyOmdsDataseriesObj:
     dataseries: dict
         Dictionary that describes the dataseries in the form
         ``d = {'basename': <name>,
+               'class': <name of the class>
                'data': <data scalar or array>,
                'dtype': <data type string>,
                'attr': <dict of data attributes>}``
@@ -354,6 +364,7 @@ class Polarization(MyOmdsDataseriesObj):
 
     def _get_dataseries(self) -> dict:
         return {'basename': self.basename,
+                'class': self.__class__.__name__,
                 'data': self.pol,
                 'dtype': POLARIZATION_TYPE,
                 'attr': {'label': self.pol[0]}}
@@ -379,6 +390,7 @@ class Axis(MyOmdsDataseriesObj):
             'zeropadded_length': 2*len(self.x),
             'n_undersampling': 0,
             'fftshift': False,
+            'rotating_frame': 0,
         }
 
         if defaults is None:
@@ -450,6 +462,7 @@ class Axis(MyOmdsDataseriesObj):
 
     def _get_dataseries(self) -> dict:
         d = {'basename': 'x',
+             'class': self.__class__.__name__,
              'data': self.x,
              'dtype': self.x.dtype,
              'attr': {'units': self.units.name} | self.options}
@@ -461,11 +474,12 @@ class Response(MyOmdsDataseriesObj):
 
     def __init__(self, kind: str, scale: str = 'mOD'):
         self.data = np.zeros((3, 3, 3))
-        self.kind = OMDS[kind.upper()]
-        self.scale = scale
+        self.kind = OMDS['kind'][kind.upper()]
+        self.scale = OMDS['scale'][scale]
 
     def _get_dataseries(self) -> dict:
         return {'basename': self.basename,
+                'class': self.__class__.__name__,
                 'data': self.data,
                 'dtype': self.data.dtype,
                 'attr': {
@@ -651,7 +665,7 @@ except FileNotFoundError:
 o = OutputterHDF5()
 
 # start a file with 3 dimension dataseries (axes), some being nested
-#o.output([dim, [dim, dim]], filename)
+o.output([dim, dim, dim], filename)
 
 o.output([dim, dim, dim], filename)
 logger.debug(f'reading h5 file {filename}')
@@ -727,5 +741,6 @@ o.output([spec, spec], filename)
 # grp._datagroup = [spec, spec]
 # playing_with_trees(grp)
 
+# reading files is probably the next big thing...
 print('done')
 # --- last line
