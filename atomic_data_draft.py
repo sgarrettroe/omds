@@ -460,33 +460,82 @@ class Spectrum:
         if axes is None:
             axes = []
         if pols is None:
-            pol = []
+            pols = []
 
         # should add checking here
 
-        self.response = response
+        self.responses = responses
         self.axes = axes
         self.pols = pols
 
     @property
     def datagroup(self) -> list:
-        out = [self.response, *self.axes, *self.pols]
-        # if isinstance(self.response, Iterable):
-        #     for r in self.response:
-        #         out.append(r._get_dataseries())
-        # else:
-        #     out.append(self.response._get_dataseries())
-        # if isinstance(self.axes, Iterable):
-        #     for a in self.axes:
-        #         out.append(a._get_dataseries())
-        # else:
-        #     out.append(self.axes._get_dataseries())
-        # if isinstance(self.pol, Iterable):
-        #     for p in self.pol:
-        #         out.append(p._get_dataseries())
-        # else:
-        #     out.append(self.pol._get_dataseries())
-        return out
+        return [*self.responses, *self.axes, *self.pols]
+
+    @datagroup.setter
+    def datagroup(self, value, flag_append=False):
+        if not isinstance(value, Iterable):
+            value = [value]
+
+        for item in value:
+            if isinstance(item, Response):
+                self.response(item, flag_append)
+            if isinstance(item, Polarization):
+                self.response(item, flag_append)
+            if isinstance(item, Axis):
+                self.response(item, flag_append)
+
+    @property
+    def responses(self):
+        return self._responses
+
+    @responses.setter
+    def responses(self, value, flag_append=False):
+        if not flag_append:
+            self._responses = []
+
+        if not isinstance(value, Iterable):
+            value = [value]
+
+        for this_item in value:
+            self._responses.append(self._validate_item(this_item, Response))
+
+    @property
+    def axes(self):
+        return self._axes
+
+    @axes.setter
+    def axes(self, value, flag_append=False):
+        if not flag_append:
+            self._axes = []
+
+        if not isinstance(value, Iterable):
+            value = [value]
+
+        for this_item in value:
+            self._axes.append(self._validate_item(this_item, Axis))
+
+    @property
+    def pols(self):
+        return self._pols
+
+    @pols.setter
+    def pols(self, value, flag_append=False):
+        if not flag_append:
+            self._pols = []
+
+        if not isinstance(value, Iterable):
+            value = [value]
+
+        for this_item in value:
+            self._pols.append(self._validate_item(this_item, Polarization))
+
+    def _validate_item(self, item, cls):
+        if isinstance(item, cls):
+            return item
+        else:
+            raise ValueError(
+                   f"Item {item} is a {item.__class__}. It must be {cls}.")
 
 
 class Outputter:
