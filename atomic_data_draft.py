@@ -24,19 +24,27 @@ logging.basicConfig(
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 
-
-OMDS = {'ABSORPTIVE': 'omds:Absorptive',
-        'REPHASING': 'omds:Rephasing',
-        'NONREPHASING': 'omds:Nonrephasing',
-        'ABS': 'omds:AbsoluteValue',
-        }
+OMDS = {}
+OMDS['kind'] = {'ABSORPTIVE': 'omds:Absorptive',
+                'DISPERSIVE': 'omds:Dispersive',
+                'REPHASING': 'omds:Rephasing',
+                'NONREPHASING': 'omds:Nonrephasing',
+                'ABS': 'omds:AbsoluteValue',
+                'MIXED': 'omds:MixedKind',
+                }
+OMDS['scale'] = {'mOD': 'omds:ScaleMilliOD',
+                 'uOD': 'omds:ScaleMicroOD',
+                 'OD': 'omds:ScaleOD',
+                 '%T': 'omds:ScalePercentTransmission',
+                 'OD/sqrt(Hz)': 'omds:ScaleOD-SQRT-SEC',
+                 'OD/sqrt(cm-1)': 'omds:ScaleOD-SQRT-CentiM',  #https://doi.org/10.1021/acs.analchem.2c04287
+                 }
 
 class UNITS(Enum):
     """ Load units and conversion factors from QUDT. But I don't
     know how to do that yet! For now use scipy.constants.
     """
-    # ToDo: figure out how to scrape URIs using rdflib
-    # ToDo: add units eV, atomic units, what else?
+    # ToDo: incorporate .units functionality here
     # Time
     AS = constants.atto  # note clash of SI "as" with keyword "as"
     ATTOSECONDS = constants.atto
@@ -82,6 +90,7 @@ class MyOmdsDataseriesObj:
     dataseries: dict
         Dictionary that describes the dataseries in the form
         ``d = {'basename': <name>,
+               'class': <name of the class>
                'data': <data scalar or array>,
                'dtype': <data type string>,
                'attr': <dict of data attributes>}``
@@ -101,6 +110,28 @@ class MyOmdsDataseriesObj:
         """Function that should be created to return a dataseries
         dictionary or list of them."""
         raise NotImplementedError("Please Implement this method")
+
+
+class MyOmdsDatagroupObj:
+    """Class for data groups.
+
+    Data groups are containers that can contain dataseries.
+
+    We're using duck typing to make the iterable.
+
+    Each subclass should implement a _datagroup as a list (or other
+    iterable) that will be used to iterate over.
+    """
+
+    # ToDo: Nesting to arbitrary depth is not yet implemented
+    def __iter__(self):
+        return self._datagroup.__iter__()
+
+    def __next__(self):
+        return self._datagroup.__next__()
+
+    def __getitem__(self, item):
+        return self._datagroup[item]
 
 
 PolarizationTuple = namedtuple('Polarization',
@@ -333,6 +364,7 @@ class Polarization(MyOmdsDataseriesObj):
 
     def _get_dataseries(self) -> dict:
         return {'basename': self.basename,
+                'class': self.__class__.__name__,
                 'data': self.pol,
                 'dtype': POLARIZATION_TYPE,
                 'attr': {'label': self.pol[0]}}
@@ -358,6 +390,7 @@ class Axis(MyOmdsDataseriesObj):
             'zeropadded_length': 2*len(self.x),
             'n_undersampling': 0,
             'fftshift': False,
+            'rotating_frame': 0,
         }
 
         if defaults is None:
@@ -429,6 +462,7 @@ class Axis(MyOmdsDataseriesObj):
 
     def _get_dataseries(self) -> dict:
         d = {'basename': 'x',
+             'class': self.__class__.__name__,
              'data': self.x,
              'dtype': self.x.dtype,
              'attr': {'units': self.units.name} | self.options}
@@ -438,22 +472,27 @@ class Axis(MyOmdsDataseriesObj):
 class Response(MyOmdsDataseriesObj):
     basename = 'R'
 
-    def __init__(self):
+    def __init__(self, kind: str, scale: str = 'mOD'):
         self.data = np.zeros((3, 3, 3))
+        self.kind = OMDS['kind'][kind.upper()]
+        self.scale = OMDS['scale'][scale]
 
     def _get_dataseries(self) -> dict:
         return {'basename': self.basename,
+                'class': self.__class__.__name__,
                 'data': self.data,
                 'dtype': self.data.dtype,
-                'attr': {'units': 'mOD',
+                'attr': {
                          'order': self.data.ndim,
-                         'kind': OMDS['ABSORPTIVE'],
-                         }
+                         'kind': self.kind,
+                        'scale': self.scale,
+                        }
                 }
 
 
-class Spectrum:
+class Spectrum(MyOmdsDatagroupObj):
     basename = 'spectrum'
+
     def __init__(self, responses=None, axes=None, pols=None):
         if responses is None:
             responses = []
@@ -467,6 +506,9 @@ class Spectrum:
         self.responses = responses
         self.axes = axes
         self.pols = pols
+
+        self._datagroup = self._makedatagroup
+        self._idx = 0
 
     @property
     def datagroup(self) -> list:
@@ -578,18 +620,34 @@ class OutputterHDF5(Outputter):
         root = root.rstrip('/') + '/'
 
         # dictionary of how many times each basename, which is used to
-        # label dataseriess uniquely. returns an integer 0 for new keys.
+        # label dataseries uniquely. returns an integer 0 for new keys.
         name_counts = defaultdict(int)
+        stem_counts = defaultdict(int)
+        dir_list = [root]
+        stem_name = root
 
         def process_item(obj):
+            nonlocal name_counts, stem_counts, dir_list, stem_name
             if isinstance(obj, Iterable):
+                if isinstance(obj, MyOmdsDatagroupObj):
+                    dir_list.append(obj.basename)
+                    stem = "/".join(dir_list).lstrip('/')
+                    stem_counts[stem] += 1
+                    stem_name = f'{stem}{stem_counts[stem]}'
+                    name_counts = defaultdict(int)
+                    name_counts["/".join(dir_list).lstrip('/')] += 1
+
                 for this_obj in obj:
                     process_item(this_obj)
+
+                if this_obj is obj[-1]:
+                    dir_list.pop()
+
             else:
                 dset = obj.dataseries
-                root_basename = root.lstrip('/') + dset["basename"]
-                name_counts[root_basename] += 1
-                full_name = f'{root_basename}{name_counts[root_basename]}'
+                stem_basename = f'{stem_name}/{dset["basename"]}'
+                name_counts[stem_basename] += 1
+                full_name = f'{stem_basename}{name_counts[stem_basename]}'
                 h5dset = f.create_dataset(full_name,
                                           dset['data'].shape,
                                           dtype=dset['dtype'],
@@ -599,6 +657,45 @@ class OutputterHDF5(Outputter):
 
         with h5py.File(filename, access_mode) as f:
             process_item(obj_in)  # recursively process input (depth first)
+
+
+def playing_with_trees(obj_in, root='/'):
+
+    # make sure there is one trailing / in the root name
+    root = root.rstrip('/') + '/'
+
+    # dictionary of how many times each basename, which is used to
+    # label dataseries uniquely. returns an integer 0 for new keys.
+    name_counts = defaultdict(int)
+    stem_counts = defaultdict(int)
+    dir_list = [root]
+    stem_name = root
+
+    def process_item(obj):
+        nonlocal name_counts, stem_counts, dir_list, stem_name
+        if isinstance(obj, Iterable):
+            if isinstance(obj, MyOmdsDatagroupObj):
+                dir_list.append(obj.basename)
+                stem = "/".join(dir_list).lstrip('/')
+                stem_counts[stem] += 1
+                stem_name = f'{stem}{stem_counts[stem]}'
+                name_counts = defaultdict(int)
+                name_counts["/".join(dir_list).lstrip('/')] += 1
+
+            for this_obj in obj:
+                process_item(this_obj)
+
+            if this_obj is obj[-1]:
+                dir_list.pop()
+
+        else:
+            dset = obj.dataseries
+            stem_basename = f'{stem_name}/{dset["basename"]}'
+            name_counts[stem_basename] += 1
+            full_name = f'{stem_basename}{name_counts[stem_basename]}'
+            print(full_name)
+
+    process_item(obj_in)  # recursively process input (depth first)
 
 
 # below here is testing and debugging
@@ -617,8 +714,9 @@ except FileNotFoundError:
 o = OutputterHDF5()
 
 # start a file with 3 dimension dataseries (axes), some being nested
-o.output([dim, [dim, dim]], filename)
+o.output([dim, dim, dim], filename)
 
+o.output([dim, dim, dim], filename)
 logger.debug(f'reading h5 file {filename}')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
@@ -639,7 +737,7 @@ with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['pol1'].attrs.items()))
 
-resp = Response()
+resp = Response('absorptive')
 o.output(resp, filename, access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
@@ -657,10 +755,41 @@ x1 = Axis(t1, UNITS.FS, options=opts)
 x2 = Axis(t2, UNITS.FS, options=opts)
 x3 = Axis(t3, UNITS.FS, options=opts)
 
+
+# single spectrum
+print('Single spectrum:\n'+'-'*8)
 spec = Spectrum(responses=[resp], axes=[x1, x2, x3],
                 pols=[pol, pol, pol, pol])
 filename = 'tmp2.h5'
-print(len(spec.datagroup))
-print(isinstance(spec.datagroup,Iterable))
-o.output(spec.datagroup, filename, access_mode='a',root='/spectrum')
+try:
+    os.remove(filename)
+    logger.info(f'removing {filename}')
+except FileNotFoundError:
+    pass
+
+playing_with_trees(spec)
+o.output(spec, filename, access_mode='a',root='/spectrum')
+
+# list of spectra
+print('List of spectra:\n'+'-'*8)
+filename = 'tmp3.h5'
+try:
+    os.remove(filename)
+    logger.info(f'removing {filename}')
+except FileNotFoundError:
+    pass
+
+playing_with_trees([spec, spec])
+o.output([spec, spec], filename)
+
+# ToDo: Nesting of spectra in groups
+# deeper groupings?
+# print('Group of spectra:\n'+'-'*8)
+# grp = MyOmdsDatagroupObj
+# grp.basename = 'grp'
+# grp._datagroup = [spec, spec]
+# playing_with_trees(grp)
+
+# reading files is probably the next big thing...
+print('done')
 # --- last line
