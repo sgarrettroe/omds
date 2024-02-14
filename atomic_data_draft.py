@@ -83,30 +83,23 @@ class MyOmdsDataseriesObj:
 
     The interface is `obj.dataseries` which should return a dict of
     {'data':val,'dtype':val,'attr':dict}. Subclasses must define
-    _get_dataseries which must return that dict structure or list of them.
+    the dataseries getter, which must return that dict structure or
+    list of them.
 
     Properties
     ----------
     dataseries: dict
         Dictionary that describes the dataseries in the form
         ``d = {'basename': <name>,
-               'class': <name of the class>
                'data': <data scalar or array>,
                'dtype': <data type string>,
                'attr': <dict of data attributes>}``
-
-    Methods
-    -------
-    _get_dataseries: dict
-        Return the dataseries dictionary. Must be overridden by subclass.
+        Must be overridden by subclass.
     """
     basename = ''
 
     @property
     def dataseries(self):
-        return self._get_dataseries()
-
-    def _get_dataseries(self) -> dict:
         """Function that should be created to return a dataseries
         dictionary or list of them."""
         raise NotImplementedError("Please Implement this method")
@@ -119,20 +112,24 @@ class MyOmdsDatagroupObj:
 
     We're using duck typing to make the iterable.
 
-    Each subclass should implement a _datagroup as a list (or other
+    Each subclass should implement a datagroup as a list (or other
     iterable) that will be used to iterate over.
     """
 
     # ToDo: Nesting to arbitrary depth is not yet implemented
     def __iter__(self):
-        return self._datagroup.__iter__()
+        return self.datagroup.__iter__()
 
     def __next__(self):
-        return self._datagroup.__next__()
+        return self.datagroup.__next__()
 
     def __getitem__(self, item):
-        return self._datagroup[item]
+        return self.datagroup[item]
 
+    @property
+    def attributes(self):
+            return {'class': self.__class__.__name__,
+                    }
 
 PolarizationTuple = namedtuple('Polarization',
                                ['name',
@@ -217,9 +214,9 @@ class Polarization(MyOmdsDataseriesObj):
     L_Z : np.ndarray
         Left circularly polarized light travelling in the Z-direction
 
-    Methods
+    Properties
     -------
-    _get_dataseries: dict
+    dataseries: dict
         Return a dictionary to save the data
 
     Notes
@@ -362,12 +359,15 @@ class Polarization(MyOmdsDataseriesObj):
         j = np.sqrt(I * p) * np.array([a, b])
         return j, p
 
-    def _get_dataseries(self) -> dict:
+    @property
+    def dataseries(self) -> dict:
         return {'basename': self.basename,
-                'class': self.__class__.__name__,
                 'data': self.pol,
                 'dtype': POLARIZATION_TYPE,
-                'attr': {'label': self.pol[0]}}
+                'attr': {
+                    'class': self.__class__.__name__,
+                    'label': self.pol[0]},
+                }
 
 
 class Axis(MyOmdsDataseriesObj):
@@ -460,12 +460,14 @@ class Axis(MyOmdsDataseriesObj):
         # print axis and label in some nice way
         pass
 
-    def _get_dataseries(self) -> dict:
-        d = {'basename': 'x',
-             'class': self.__class__.__name__,
+    @property
+    def dataseries(self) -> dict:
+        d = {'basename': self.basename,
              'data': self.x,
              'dtype': self.x.dtype,
-             'attr': {'units': self.units.name} | self.options}
+             'attr': {'class': self.__class__.__name__,
+                      'units': self.units.name} | self.options,  # | merges dicts
+             }
         return d
 
 
@@ -477,16 +479,17 @@ class Response(MyOmdsDataseriesObj):
         self.kind = OMDS['kind'][kind.upper()]
         self.scale = OMDS['scale'][scale]
 
-    def _get_dataseries(self) -> dict:
+    @property
+    def dataseries(self) -> dict:
         return {'basename': self.basename,
-                'class': self.__class__.__name__,
                 'data': self.data,
                 'dtype': self.data.dtype,
                 'attr': {
-                         'order': self.data.ndim,
-                         'kind': self.kind,
-                        'scale': self.scale,
-                        }
+                    'class': self.__class__.__name__,
+                    'order': self.data.ndim,
+                    'kind': self.kind,
+                    'scale': self.scale,
+                    }
                 }
 
 
@@ -506,9 +509,6 @@ class Spectrum(MyOmdsDatagroupObj):
         self.responses = responses
         self.axes = axes
         self.pols = pols
-
-        self._datagroup = self._makedatagroup
-        self._idx = 0
 
     @property
     def datagroup(self) -> list:
@@ -654,6 +654,8 @@ class OutputterHDF5(Outputter):
                                           data=dset['data'])
                 for (key, val) in dset['attr'].items():
                     h5dset.attrs[key] = val
+                # ToDo: Consider dimension scales to link x1, x2, ... to the data
+                # see https://docs.h5py.org/en/stable/high/dims.html
 
         with h5py.File(filename, access_mode) as f:
             process_item(obj_in)  # recursively process input (depth first)
@@ -758,7 +760,7 @@ x3 = Axis(t3, UNITS.FS, options=opts)
 
 # single spectrum
 print('Single spectrum:\n'+'-'*8)
-spec = Spectrum(responses=[resp], axes=[x1, x2, x3],
+spec = Spectrum(responses=[resp, resp], axes=[x1, x2, x3],
                 pols=[pol, pol, pol, pol])
 filename = 'tmp2.h5'
 try:
