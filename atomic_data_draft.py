@@ -138,9 +138,6 @@ class MyOmdsDatagroupObj:
     def __iter__(self):
         return self.datagroup.__iter__()
 
-    def __next__(self):
-        return self.datagroup.__next__()
-
     def __getitem__(self, item):
         return self.datagroup[item]
 
