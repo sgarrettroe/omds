@@ -5,15 +5,16 @@ canonical file format (HDF5).
 import numpy as np
 import scipy.constants as constants
 import h5py
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from collections.abc import Iterable
 from enum import Enum
 import logging
 from pprint import pformat
 from typing import Tuple
+import re
+import os  # path used in manipulating HDF5 names
 
 # for debugging / testing (can/should be removed)
-import os
 from pprint import pprint
 
 # set up logging
@@ -24,21 +25,23 @@ logging.basicConfig(
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 
-OMDS = {}
-OMDS['kind'] = {'ABSORPTIVE': 'omds:Absorptive',
-                'DISPERSIVE': 'omds:Dispersive',
-                'REPHASING': 'omds:Rephasing',
-                'NONREPHASING': 'omds:Nonrephasing',
-                'ABS': 'omds:AbsoluteValue',
-                'MIXED': 'omds:MixedKind',
-                }
-OMDS['scale'] = {'mOD': 'omds:ScaleMilliOD',
-                 'uOD': 'omds:ScaleMicroOD',
-                 'OD': 'omds:ScaleOD',
-                 '%T': 'omds:ScalePercentTransmission',
-                 'OD/sqrt(Hz)': 'omds:ScaleOD-SQRT-SEC',
-                 'OD/sqrt(cm-1)': 'omds:ScaleOD-SQRT-CentiM',  #https://doi.org/10.1021/acs.analchem.2c04287
-                 }
+OMDS = {'kind': {'ABSORPTIVE': 'omds:Absorptive',
+                 'DISPERSIVE': 'omds:Dispersive',
+                 'REPHASING': 'omds:Rephasing',
+                 'NONREPHASING': 'omds:Nonrephasing',
+                 'ABS': 'omds:AbsoluteValue',
+                 'MIXED': 'omds:MixedKind',
+                 },
+        'scale': {'mOD': 'omds:ScaleMilliOD',
+                  'uOD': 'omds:ScaleMicroOD',
+                  'OD': 'omds:ScaleOD',
+                  '%T': 'omds:ScalePercentTransmission',
+                  'OD/sqrt(Hz)': 'omds:ScaleOD-SQRT-SEC',
+                  # https://doi.org/10.1021/acs.analchem.2c04287
+                  'OD/sqrt(cm-1)': 'omds:ScaleOD-SQRT-CentiM',
+                  }
+        }
+
 
 class UNITS(Enum):
     """ Load units and conversion factors from QUDT. But I don't
@@ -108,15 +111,28 @@ class MyOmdsDataseriesObj:
 class MyOmdsDatagroupObj:
     """Class for data groups.
 
-    Data groups are containers that can contain dataseries.
+    Data groups are containers that can contain dataseries or other
+    datagroups.
 
-    We're using duck typing to make the iterable.
+    We're using duck typing to make this class iterable.
 
     Each subclass should implement a datagroup as a list (or other
     iterable) that will be used to iterate over.
+
+    Properties
+    ----------
+    datagroup: list
+        The data group contents.
+    attributes: dict
+        The attributes of the datagroup.
+            ``d = {'class': str}
+
     """
 
     basename = 'Datagroup'
+
+    def __init__(self, datagrp: list):
+        self.datagroup = datagrp
 
     # ToDo: Nesting to arbitrary depth is not yet implemented
     def __iter__(self):
@@ -130,8 +146,8 @@ class MyOmdsDatagroupObj:
 
     @property
     def attributes(self):
-            return {'class': self.__class__.__name__,
-                    }
+        return {'class': self.__class__.__name__,
+                }
 
 
 PolarizationTuple = namedtuple('Polarization',
@@ -468,8 +484,9 @@ class Axis(MyOmdsDataseriesObj):
         d = {'basename': self.basename,
              'data': self.x,
              'dtype': self.x.dtype,
+             # the | character below merges dicts
              'attr': {'class': self.__class__.__name__,
-                      'units': self.units.name} | self.options,  # | merges dicts
+                      'units': self.units.name} | self.options,
              }
         return d
 
@@ -518,7 +535,7 @@ class Spectrum(MyOmdsDatagroupObj):
         return [*self.responses, *self.axes, *self.pols]
 
     @datagroup.setter
-    def datagroup(self, value, flag_append=False):
+    def datagroup(self, value):
         if not isinstance(value, Iterable):
             value = [value]
 
@@ -569,7 +586,8 @@ class Spectrum(MyOmdsDatagroupObj):
         for this_item in value:
             self._pols.append(self._validate_item(this_item, Polarization))
 
-    def _validate_item(self, item, cls):
+    @staticmethod
+    def _validate_item(item, cls):
         if isinstance(item, cls):
             return item
         else:
@@ -583,7 +601,8 @@ class Outputter:
     """
     # take response function in and provide fxn to write output file
 
-    def output(self, obj, filename, root='/'):
+    def output(self, obj, filename, root='/', access_mode='w',
+               scidata_iri='') -> None:
         pass
 
 
@@ -591,15 +610,16 @@ class OutputterHDF5(Outputter):
     """Class to write output to an HDF5 file.
     """
     # default output mechanism, writes HDF5 file
-    def output(self, obj_in, filename, root='/', access_mode='w') -> None:
+    def output(self, obj_in, filename, root='/', access_mode='w',
+               scidata_iri='') -> None:
         """Output HDF5 file that saves the dataseries or sets of them.
 
         Parameters
         ----------
         obj_in : MyOmdsDataseriesObj or list of MyOmdsDataseriesObj
             The input objects to be processed. They must have an
-            attribute dataseries. Dataseries must be a dictionary with keys
-            "basename", "data", and "dtype".
+            attribute dataseries. Dataseries must be a dictionary with
+            keys "basename", "data", and "dtype".
         filename : str
             The name of the output file.
         root :
@@ -607,6 +627,9 @@ class OutputterHDF5(Outputter):
         access_mode : {'w','a'}, optional
             The mode used to open the output file. The default is 'w',
             which overwrites and existing file.
+        scidata_iri : str, optional
+            A link back to the scidata description (usually a json-ld
+            file) that points to this datagroup or dataset.
 
         Returns
         -------
@@ -615,6 +638,36 @@ class OutputterHDF5(Outputter):
 
         # make sure there is one trailing / in the root name
         root = root.rstrip('/') + '/'
+
+        def attach_axis_to_responses(axis_dset: h5py.Dataset,
+                                     current_hdf_group: h5py.Group) -> None:
+            """Attach the axis object to the responses found in the
+            current group.
+
+            References
+            ---
+            https://docs.h5py.org/en/stable/high/dims.html
+            """
+            axis_dset.make_scale()
+
+            # get the number of the axis
+            m = re.match(rf'{Axis.basename}(\d+)', os.path.basename(axis_dset.name))
+            if m:
+                dim_idx = int(m.group(1)) - 1
+            else:
+                raise ValueError(f'Axis name {axis_dset.name} does not match '
+                                 f'required pattern {Axis.basename}<int>.')
+
+            name = Response.basename
+            r_idx = 1
+            flag_continue = True
+            while flag_continue:
+                r_name = f'{name}{r_idx}'
+                if grp.__contains__(f'{r_name}'):
+                    grp[r_name].dims[dim_idx].attach_scale(axis_dset)
+                    r_idx += 1
+                else:
+                    flag_continue = False
 
         def process_item(obj, grp):
             if isinstance(obj, list):
@@ -639,20 +692,24 @@ class OutputterHDF5(Outputter):
                 while grp.__contains__(f'{obj.basename}{idx}'):
                     idx += 1
                 h5dset = grp.create_dataset(f'{obj.basename}{idx}',
-                                          dset['data'].shape,
-                                          dtype=dset['dtype'],
-                                          data=dset['data'])
+                                            dset['data'].shape,
+                                            dtype=dset['dtype'],
+                                            data=dset['data'])
                 for (key, val) in dset['attr'].items():
                     h5dset.attrs[key] = val
-                # ToDo: Consider dimension scales to link x1, x2, ... to the data
-                # see https://docs.h5py.org/en/stable/high/dims.html
+
+                # attach "dimension scales" for Axis objects
+                if isinstance(obj, Axis):
+                    attach_axis_to_responses(h5dset, grp)
 
         with h5py.File(filename, access_mode) as f:
             if f.__contains__(f'{root}'):
                 grp = f
             else:
                 grp = f.create_group(root)
-            process_item(obj_in, grp)  # recursively process input (depth first)
+            if root == '/':
+                f.attrs['scidata_iri'] = scidata_iri
+            process_item(obj_in, grp)  # recursively process input
 
 
 def myh5disp(group):
@@ -758,12 +815,6 @@ with h5py.File(filename, 'r') as f:
     myh5disp(f)
 
 # ToDo: Nesting of spectra in groups
-# deeper groupings?
-# print('Group of spectra:\n'+'-'*8)
-# grp = MyOmdsDatagroupObj
-# grp.basename = 'grp'
-# grp._datagroup = [spec, spec]
-# playing_with_trees(grp)
 
 # reading files is probably the next big thing...
 print('done')
