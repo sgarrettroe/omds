@@ -131,10 +131,9 @@ class MyOmdsDatagroupObj:
 
     basename = 'Datagroup'
 
-    def __init__(self, datagrp: list):
-        self.datagroup = datagrp
+    def __init__(self, data_grp: list):
+        self.datagroup = data_grp
 
-    # ToDo: Nesting to arbitrary depth is not yet implemented
     def __iter__(self):
         return self.datagroup.__iter__()
 
@@ -245,25 +244,26 @@ class Polarization(MyOmdsDataseriesObj):
     See DOI: 10.1103/PhysRevA.90.023809 for a full 3D treatment.
     """
     basename = 'pol'
-    X = np.array([PolarizationTuple(name='X',
+    polarization_dict = {
+        'X': np.array([PolarizationTuple(name='X',
                                     Jones3=np.array([1, 0, 0]),
                                     cartesian=np.array([0, 0, 1]),
                                     angles=np.array([0, 0]),
                                     Stokes=np.array([1, 1, 0, 0]))],
-                 dtype=POLARIZATION_TYPE)
-    Y = np.array([PolarizationTuple(name='Y',
+                 dtype=POLARIZATION_TYPE),
+        'Y': np.array([PolarizationTuple(name='Y',
                                     Jones3=np.array([0, 1, 0]),
                                     cartesian=np.array([0, 0, 1]),
                                     angles=np.array([np.pi/2, 0]),
                                     Stokes=np.array([1, -1, 0, 0]))],
-                 dtype=POLARIZATION_TYPE)
-    Z = np.array([PolarizationTuple(name='Z',
+                 dtype=POLARIZATION_TYPE),
+        'Z': np.array([PolarizationTuple(name='Z',
                                     Jones3=np.array([0, 0, 1]),
                                     cartesian=np.array([1, 0, 0]),
                                     angles=np.array([0, 0]),
                                     Stokes=np.array([1, 1, 0, 0]))],
-                 dtype=POLARIZATION_TYPE)
-    M = np.array(
+                 dtype=POLARIZATION_TYPE),
+        'M': np.array(
         [PolarizationTuple(name='Z',
                                 Jones3=np.array([np.cos(MAGIC_ANGLE),
                                                  np.sin(MAGIC_ANGLE), 0]),
@@ -273,64 +273,65 @@ class Polarization(MyOmdsDataseriesObj):
                                                  -1/3,
                                                  0.9428090415820634,
                                                  0]))],
-        dtype=POLARIZATION_TYPE)
-    U = np.array([PolarizationTuple(name='U',
+        dtype=POLARIZATION_TYPE),
+        'U': np.array([PolarizationTuple(name='U',
                                     Jones3=None,
                                     cartesian=np.array([0, 0, 1]),
                                     angles=None,
                                     Stokes=np.array([1, 0, 0, 0]))],
-                 dtype=POLARIZATION_TYPE)
-    R = np.array([PolarizationTuple(name='R',
+                 dtype=POLARIZATION_TYPE),
+        'R': np.array([PolarizationTuple(name='R',
                                     Jones3=np.array([1, 1j, 0]),
                                     cartesian=np.array([0, 0, 1]),
                                     angles=np.array([0, -np.pi/4]),
                                     Stokes=np.array([1, 0, 0, 1]))],
-                 dtype=POLARIZATION_TYPE)
-    L = np.array([PolarizationTuple(name='R',
+                 dtype=POLARIZATION_TYPE),
+        'L': np.array([PolarizationTuple(name='R',
                                     Jones3=np.array([1, 1j, 0]),
                                     cartesian=np.array([0, 0, 1]),
                                     angles=np.array([0, np.pi/4]),
                                     Stokes=np.array([1, 0, 0, -1]))],
-                 dtype=POLARIZATION_TYPE)
-    R_X = np.array([PolarizationTuple(name='R_X',
+                 dtype=POLARIZATION_TYPE),
+        'R_X': np.array([PolarizationTuple(name='R_X',
                                       Jones3=np.array([0, 1, -1j])/np.sqrt(2),
                                       cartesian=np.array([1, 0, 0]),
                                       angles=np.array([0, -np.pi/4]),
                                       Stokes=np.array([1, 0, 0, 1]))],
-                   dtype=POLARIZATION_TYPE)
-    L_X = np.array([PolarizationTuple(name='L_X',
+                   dtype=POLARIZATION_TYPE),
+        'L_X': np.array([PolarizationTuple(name='L_X',
                                       Jones3=np.array([0, 1, 1j])/np.sqrt(2),
                                       cartesian=np.array([1, 0, 0]),
                                       angles=np.array([0, np.pi/4]),
                                       Stokes=np.array([1, 0, 0, -1]))],
-                   dtype=POLARIZATION_TYPE)
-    R_Y = np.array([PolarizationTuple(name='R_Y',
+                   dtype=POLARIZATION_TYPE),
+        'R_Y': np.array([PolarizationTuple(name='R_Y',
                                       Jones3=np.array([1, 0, -1j])/np.sqrt(2),
                                       cartesian=np.array([1, 0, 0]),
                                       angles=np.array([0, -np.pi/4]),
                                       Stokes=np.array([1, 0, 0, 1]))],
-                   dtype=POLARIZATION_TYPE)
-    L_Y = np.array([PolarizationTuple(name='L_Y',
+                   dtype=POLARIZATION_TYPE),
+        'L_Y': np.array([PolarizationTuple(name='L_Y',
                                       Jones3=np.array([1, 0, 1j]) / np.sqrt(2),
                                       cartesian=np.array([1, 0, 0]),
                                       angles=np.array([0, np.pi/4]),
                                       Stokes=np.array([1, 0, 0, -1]))],
-                   dtype=POLARIZATION_TYPE)
-    R_Z = np.array([PolarizationTuple(name='R_Z',
+                   dtype=POLARIZATION_TYPE),
+        'R_Z': np.array([PolarizationTuple(name='R_Z',
                                       Jones3=np.array([1, -1j, 0])/np.sqrt(2),
                                       cartesian=np.array([1, 0, 0]),
                                       angles=np.array([0, -np.pi/4]),
                                       Stokes=np.array([1, 0, 0, 1]))],
-                   dtype=POLARIZATION_TYPE)
-    L_Z = np.array([PolarizationTuple(name='L_Z',
+                   dtype=POLARIZATION_TYPE),
+        'L_Z': np.array([PolarizationTuple(name='L_Z',
                                       Jones3=np.array([1, 1j, 0])/np.sqrt(2),
                                       cartesian=np.array([1, 0, 0]),
                                       angles=np.array([0, np.pi/4]),
                                       Stokes=np.array([1, 0, 0, -1]))],
-                   dtype=POLARIZATION_TYPE)
+                   dtype=POLARIZATION_TYPE),
+    }
 
     def __init__(self, pol_in):
-        self.pol = getattr(self, pol_in)
+        self.pol = self.polarization_dict[pol_in]
 
     @staticmethod
     def jones_to_stokes(jones) -> np.ndarray:
@@ -382,7 +383,7 @@ class Polarization(MyOmdsDataseriesObj):
                 'dtype': POLARIZATION_TYPE,
                 'attr': {
                     'class': self.__class__.__name__,
-                    'label': self.pol[0]},
+                    'label': self.pol[0][0]},
                 }
 
 
@@ -459,7 +460,7 @@ class Axis(MyOmdsDataseriesObj):
         conversion = tu.value * fu.value
 
         logger.error('Frequency to time not yet implemented')
-        raise NotImplemented
+        raise NotImplementedError
 
     def fft_axis(self):
         if self.units in UNIT_TYPE.TIME_UNITS:
@@ -470,7 +471,7 @@ class Axis(MyOmdsDataseriesObj):
 
     def unit_conversion(self, new_units):
         # change units and calculate the unit conversion on the data
-        raise NotImplemented
+        raise NotImplementedError
 
     def output(self):
         # print axis and label in some nice way
@@ -493,8 +494,8 @@ class Response(MyOmdsDataseriesObj):
 
     def __init__(self, kind: str, scale: str = 'mOD'):
         self.data = np.zeros((3, 3, 3))
-        self.kind = OMDS['kind'][kind.upper()]
-        self.scale = OMDS['scale'][scale]
+        self.kind = OMDS['kind'][kind.lstrip('omds:').upper()]
+        self.scale = OMDS['scale'][scale.lstrip('omds:Scale')]
 
     @property
     def dataseries(self) -> dict:
@@ -709,14 +710,99 @@ class OutputterHDF5(Outputter):
             process_item(obj_in, grp)  # recursively process input
 
 
+class Inputter:
+    """Base class for all input classes.
+
+    """
+    def __init__(self):
+        pass
+
+    def input(self, file_name: str) -> list:
+        raise NotImplementedError("Please implement this import function.")
+
+
+class InputterHDF5(Inputter):
+    """Class to import from HDF5.
+    """
+    def __init__(self):
+        super().__init__()
+        pass
+
+    def input(self, file_name: str) -> list:
+        with h5py.File(file_name, 'r') as f:
+            data_list = [self.process_item(item) for item in f.values()]
+        return data_list
+
+
+    def process_item(self, item) -> list | MyOmdsDataseriesObj | MyOmdsDatagroupObj:
+
+        if isinstance(item, h5py.Group):
+            if item.name == '/':
+                logger.debug('found root group')
+                return [process_item(this_item) for this_item in item.values()]
+
+            else:
+                if 'class' not in item.attrs.keys():
+                    logger.warning('Folders like raw/ not yet implemented. Skipping...')
+                    return [item.name]
+
+                elif item.attrs['class'] == MyOmdsDatagroupObj.__name__:
+                    logger.debug('found datagroup')
+                    return MyOmdsDatagroupObj([self.process_item(this_item)
+                                               for this_item in item.values()])
+                elif item.attrs['class'] == Spectrum.__name__:
+                    logger.debug('found Spectrum')
+                    return Spectrum(responses=[self.process_response_item(this_item)
+                                               for this_item in item.values()
+                                               if this_item.attr['class']==Response.__name__],
+                                    pols=[self.process_polarization_item(this_item)
+                                               for this_item in item.values()
+                                               if this_item.attr[
+                                                   'class'] == Polarization.__name__],
+                                    axes=[self.process_axis_item(this_item)
+                                               for this_item in item.values()
+                                               if this_item.attr[
+                                                   'class'] == Axis.__name__],
+                                    )
+                else:
+                    raise TypeError(f'Expected datagroup | dataseries, found {item.attrs["class"]}')
+
+        if isinstance(item, h5py.Dataset):
+            if item.attrs['class'] == MyOmdsDataseriesObj.__name__:
+                raise NotImplementedError('No default data series implemented yet.')
+            else:
+                logger.debug('found a dataseries in root group')
+                if item.attrs['class'] == Response.__name__:
+                    return self.process_response_item(item)
+                elif item.attrs['class'] == Polarization.__name__:
+                    return self.process_polarization_item(item)
+                elif item.attrs['class'] == Axis.__name__:
+                    return self.process_axis_item(item)
+                else:
+                    raise TypeError(f'Unknown data class found {item.attrs["class"]}')
+
+    def process_response_item(self, item):
+        logger.debug(f'Found response item {item.name}')
+        return Response(kind=item.attrs['kind'],scale=item.attrs['scale'])
+
+    def process_polarization_item(self, item):
+        logger.debug(f'Found polarization item {item.name}')
+        return Polarization(pol_in=item.attrs['label'])
+
+    def process_axis_item(self, item):
+        logger.debug(f'Found axis item {item.name}')
+        return Axis(x=item, units=item.attrs['units'])
+
+
 def myh5disp(group):
-    for i in list(group. keys()):
+    for i in list(group.keys()):
         try:
             if list(group[i].keys()):
                 print(f"{group.name}/{i}/")
                 myh5disp(group[i])
         except:
             print(group[i].name, group[i].dtype, group[i].shape)
+
 
 # below here is testing and debugging
 t = np.arange(32, dtype=float)
@@ -811,8 +897,9 @@ print('Multiple spectra:\n'+'-'*8)
 with h5py.File(filename, 'r') as f:
     myh5disp(f)
 
-# ToDo: Nesting of spectra in groups
-
 # reading files is probably the next big thing...
+i = InputterHDF5()
+uh = i.input('tmp.h5')
+pprint(uh)
 print('done')
 # --- last line
