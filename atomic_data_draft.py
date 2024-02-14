@@ -43,9 +43,11 @@ OMDS = {'kind': {'ABSORPTIVE': 'omds:Absorptive',
         }
 
 
+# noinspection PyPep8Naming
 class UNITS(Enum):
-    """ Load units and conversion factors from QUDT. But I don't
-    know how to do that yet! For now use scipy.constants.
+    """ Load units and conversion factors from QUDT.
+
+    But I don't know how to do that yet! For now use scipy.constants.
     """
     # ToDo: incorporate .units functionality here
     # Time
