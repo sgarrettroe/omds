@@ -116,6 +116,8 @@ class MyOmdsDatagroupObj:
     iterable) that will be used to iterate over.
     """
 
+    basename = 'Datagroup'
+
     # ToDo: Nesting to arbitrary depth is not yet implemented
     def __iter__(self):
         return self.datagroup.__iter__()
@@ -130,6 +132,7 @@ class MyOmdsDatagroupObj:
     def attributes(self):
             return {'class': self.__class__.__name__,
                     }
+
 
 PolarizationTuple = namedtuple('Polarization',
                                ['name',
@@ -521,24 +524,22 @@ class Spectrum(MyOmdsDatagroupObj):
 
         for item in value:
             if isinstance(item, Response):
-                self.response(item, flag_append)
+                self.responses = item
             if isinstance(item, Polarization):
-                self.response(item, flag_append)
+                self.pols = item
             if isinstance(item, Axis):
-                self.response(item, flag_append)
+                self.axes = item
 
     @property
     def responses(self):
         return self._responses
 
     @responses.setter
-    def responses(self, value, flag_append=False):
-        if not flag_append:
-            self._responses = []
-
+    def responses(self, value):
         if not isinstance(value, Iterable):
             value = [value]
 
+        self._responses = []
         for this_item in value:
             self._responses.append(self._validate_item(this_item, Response))
 
@@ -547,13 +548,11 @@ class Spectrum(MyOmdsDatagroupObj):
         return self._axes
 
     @axes.setter
-    def axes(self, value, flag_append=False):
-        if not flag_append:
-            self._axes = []
-
+    def axes(self, value):
         if not isinstance(value, Iterable):
             value = [value]
 
+        self._axes = []
         for this_item in value:
             self._axes.append(self._validate_item(this_item, Axis))
 
@@ -562,13 +561,11 @@ class Spectrum(MyOmdsDatagroupObj):
         return self._pols
 
     @pols.setter
-    def pols(self, value, flag_append=False):
-        if not flag_append:
-            self._pols = []
-
+    def pols(self, value):
         if not isinstance(value, Iterable):
             value = [value]
 
+        self._pols = []
         for this_item in value:
             self._pols.append(self._validate_item(this_item, Polarization))
 
@@ -619,36 +616,29 @@ class OutputterHDF5(Outputter):
         # make sure there is one trailing / in the root name
         root = root.rstrip('/') + '/'
 
-        # dictionary of how many times each basename, which is used to
-        # label dataseries uniquely. returns an integer 0 for new keys.
-        name_counts = defaultdict(int)
-        stem_counts = defaultdict(int)
-        dir_list = [root]
-        stem_name = root
+        def process_item(obj, grp):
+            if isinstance(obj, list):
+                for this_obj in obj:
+                    process_item(this_obj, grp)
 
-        def process_item(obj):
-            nonlocal name_counts, stem_counts, dir_list, stem_name
-            if isinstance(obj, Iterable):
-                if isinstance(obj, MyOmdsDatagroupObj):
-                    dir_list.append(obj.basename)
-                    stem = "/".join(dir_list).lstrip('/')
-                    stem_counts[stem] += 1
-                    stem_name = f'{stem}{stem_counts[stem]}'
-                    name_counts = defaultdict(int)
-                    name_counts["/".join(dir_list).lstrip('/')] += 1
+            elif isinstance(obj, MyOmdsDatagroupObj):
+                idx = 1
+                while grp.__contains__(f'{obj.basename}{idx}'):
+                    idx += 1
+
+                subgrp = grp.create_group(f'{obj.basename}{idx}')
+                for (key, val) in obj.attributes.items():
+                    subgrp.attrs[key] = val
 
                 for this_obj in obj:
-                    process_item(this_obj)
-
-                if this_obj is obj[-1]:
-                    dir_list.pop()
+                    process_item(this_obj, subgrp)
 
             else:
                 dset = obj.dataseries
-                stem_basename = f'{stem_name}/{dset["basename"]}'
-                name_counts[stem_basename] += 1
-                full_name = f'{stem_basename}{name_counts[stem_basename]}'
-                h5dset = f.create_dataset(full_name,
+                idx = 1
+                while grp.__contains__(f'{obj.basename}{idx}'):
+                    idx += 1
+                h5dset = grp.create_dataset(f'{obj.basename}{idx}',
                                           dset['data'].shape,
                                           dtype=dset['dtype'],
                                           data=dset['data'])
@@ -658,47 +648,21 @@ class OutputterHDF5(Outputter):
                 # see https://docs.h5py.org/en/stable/high/dims.html
 
         with h5py.File(filename, access_mode) as f:
-            process_item(obj_in)  # recursively process input (depth first)
+            if f.__contains__(f'{root}'):
+                grp = f
+            else:
+                grp = f.create_group(root)
+            process_item(obj_in, grp)  # recursively process input (depth first)
 
 
-def playing_with_trees(obj_in, root='/'):
-
-    # make sure there is one trailing / in the root name
-    root = root.rstrip('/') + '/'
-
-    # dictionary of how many times each basename, which is used to
-    # label dataseries uniquely. returns an integer 0 for new keys.
-    name_counts = defaultdict(int)
-    stem_counts = defaultdict(int)
-    dir_list = [root]
-    stem_name = root
-
-    def process_item(obj):
-        nonlocal name_counts, stem_counts, dir_list, stem_name
-        if isinstance(obj, Iterable):
-            if isinstance(obj, MyOmdsDatagroupObj):
-                dir_list.append(obj.basename)
-                stem = "/".join(dir_list).lstrip('/')
-                stem_counts[stem] += 1
-                stem_name = f'{stem}{stem_counts[stem]}'
-                name_counts = defaultdict(int)
-                name_counts["/".join(dir_list).lstrip('/')] += 1
-
-            for this_obj in obj:
-                process_item(this_obj)
-
-            if this_obj is obj[-1]:
-                dir_list.pop()
-
-        else:
-            dset = obj.dataseries
-            stem_basename = f'{stem_name}/{dset["basename"]}'
-            name_counts[stem_basename] += 1
-            full_name = f'{stem_basename}{name_counts[stem_basename]}'
-            print(full_name)
-
-    process_item(obj_in)  # recursively process input (depth first)
-
+def myh5disp(group):
+    for i in list(group. keys()):
+        try:
+            if list(group[i].keys()):
+                print(f"{group.name}/{i}/")
+                myh5disp(group[i])
+        except:
+            print(group[i].name, group[i].dtype, group[i].shape)
 
 # below here is testing and debugging
 t = np.arange(32, dtype=float)
@@ -718,11 +682,11 @@ o = OutputterHDF5()
 # start a file with 3 dimension dataseries (axes), some being nested
 o.output([dim, dim, dim], filename)
 
-o.output([dim, dim, dim], filename)
 logger.debug(f'reading h5 file {filename}')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['x1'].attrs.items()))
+    myh5disp(f)
 
 # add another axis under raw/
 o.output([dim], filename, root='raw', access_mode='a')
@@ -730,6 +694,8 @@ o.output([dim], filename, root='raw', access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5/raw keys found: ' + pformat(f['raw'].keys()))
     logger.debug(pformat(f['raw'].attrs.items()))
+    myh5disp(f)
+
 
 pol = Polarization('X')
 pprint(pol)
@@ -738,12 +704,16 @@ o.output([pol, pol, pol, pol], filename, access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['pol1'].attrs.items()))
+    myh5disp(f)
+
 
 resp = Response('absorptive')
 o.output(resp, filename, access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
     logger.debug(pformat(f['R1'].attrs.items()))
+    myh5disp(f)
+
 
 logger.debug(Polarization.angles_to_stokes([MAGIC_ANGLE, 0]))
 pprint(Polarization.angles_to_stokes([MAGIC_ANGLE, 0])[2])
@@ -769,11 +739,12 @@ try:
 except FileNotFoundError:
     pass
 
-playing_with_trees(spec)
-o.output(spec, filename, access_mode='a',root='/spectrum')
+o.output(spec, filename, access_mode='a', root='/spectrum')
 
 # list of spectra
-print('List of spectra:\n'+'-'*8)
+with h5py.File(filename, 'r') as f:
+    myh5disp(f)
+
 filename = 'tmp3.h5'
 try:
     os.remove(filename)
@@ -781,8 +752,10 @@ try:
 except FileNotFoundError:
     pass
 
-playing_with_trees([spec, spec])
 o.output([spec, spec], filename)
+print('Multiple spectra:\n'+'-'*8)
+with h5py.File(filename, 'r') as f:
+    myh5disp(f)
 
 # ToDo: Nesting of spectra in groups
 # deeper groupings?
