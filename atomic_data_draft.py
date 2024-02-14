@@ -67,6 +67,7 @@ class UNITS(Enum):
     WAVENUMBERS = constants.c / constants.centi
 
 
+# noinspection PyPep8Naming
 class UNIT_TYPE(set, Enum):
     TIME_UNITS = {UNITS.ATTOSECONDS,
                   UNITS.FS,
@@ -112,7 +113,7 @@ class MyOmdsDatagroupObj:
     """Class for data groups.
 
     Data groups are containers that can contain dataseries or other
-    datagroups.
+    datagroup(s).
 
     We're using duck typing to make this class iterable.
 
@@ -131,10 +132,11 @@ class MyOmdsDatagroupObj:
 
     basename = 'Datagroup'
 
-    def __init__(self, datagrp: list):
-        self.datagroup = datagrp
+    def __init__(self, data_group: list = None):
+        if data_group is None:
+            data_group = []
+        self.datagroup = data_group
 
-    # ToDo: Nesting to arbitrary depth is not yet implemented
     def __iter__(self):
         return self.datagroup.__iter__()
 
@@ -357,6 +359,7 @@ class Polarization(MyOmdsDataseriesObj):
         ])
         return s
 
+    # noinspection PyPep8Naming
     @staticmethod
     def stokes_to_jones(s) -> Tuple[np.ndarray, float]:
         # Calculate the degree of polarization
@@ -514,6 +517,7 @@ class Spectrum(MyOmdsDatagroupObj):
     basename = 'spectrum'
 
     def __init__(self, responses=None, axes=None, pols=None):
+        super().__init__()
         if responses is None:
             responses = []
         if axes is None:
@@ -609,13 +613,14 @@ class OutputterHDF5(Outputter):
     """Class to write output to an HDF5 file.
     """
     # default output mechanism, writes HDF5 file
-    def output(self, obj_in, filename, root='/', access_mode='w',
+    def output(self, obj_in: list | MyOmdsDataseriesObj | MyOmdsDatagroupObj,
+               filename, root='/', access_mode='w',
                scidata_iri='') -> None:
         """Output HDF5 file that saves the dataseries or sets of them.
 
         Parameters
         ----------
-        obj_in : MyOmdsDataseriesObj | MyOmdsDataseriesObj | list
+        obj_in : MyOmdsDataseriesObj | MyOmdsDatagroupObj | list
             The input objects to be processed. They must have an
             attribute dataseries. Dataseries must be a dictionary with
             keys "basename", "data", and "dtype".
@@ -679,12 +684,12 @@ class OutputterHDF5(Outputter):
                 while grp.__contains__(f'{obj.basename}{idx}'):
                     idx += 1
 
-                subgrp = grp.create_group(f'{obj.basename}{idx}')
+                sub_grp = grp.create_group(f'{obj.basename}{idx}')
                 for (key, val) in obj.attributes.items():
-                    subgrp.attrs[key] = val
+                    sub_grp.attrs[key] = val
 
                 for this_obj in obj:
-                    process_item(this_obj, subgrp)
+                    process_item(this_obj, sub_grp)
 
             elif isinstance(obj, MyOmdsDataseriesObj):
                 dset = obj.dataseries
@@ -704,8 +709,7 @@ class OutputterHDF5(Outputter):
             else:
                 raise TypeError(f'Object has incorrect type. Expected'
                                 f'list | MyOmdsDataseries | MyOmdsDatagroup, '
-                                f'found {type(obj)}.' )
-
+                                f'found {type(obj)}.')
 
         with h5py.File(filename, access_mode) as f:
             if f.__contains__(f'{root}'):
@@ -723,8 +727,9 @@ def myh5disp(group):
             if list(group[i].keys()):
                 print(f"{group.name}/{i}/")
                 myh5disp(group[i])
-        except:
+        except AttributeError:
             print(group[i].name, group[i].dtype, group[i].shape)
+
 
 # below here is testing and debugging
 t = np.arange(32, dtype=float)
