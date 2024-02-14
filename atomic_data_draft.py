@@ -43,9 +43,11 @@ OMDS = {'kind': {'ABSORPTIVE': 'omds:Absorptive',
         }
 
 
+# noinspection PyPep8Naming
 class UNITS(Enum):
-    """ Load units and conversion factors from QUDT. But I don't
-    know how to do that yet! For now use scipy.constants.
+    """ Load units and conversion factors from QUDT.
+
+    But I don't know how to do that yet! For now use scipy.constants.
     """
     # ToDo: incorporate .units functionality here
     # Time
@@ -112,7 +114,7 @@ class MyOmdsDatagroupObj:
     """Class for data groups.
 
     Data groups are containers that can contain dataseries or other
-    datagroups.
+    datagroup(s).
 
     We're using duck typing to make this class iterable.
 
@@ -131,8 +133,10 @@ class MyOmdsDatagroupObj:
 
     basename = 'Datagroup'
 
-    def __init__(self, data_grp: list):
-        self.datagroup = data_grp
+    def __init__(self, data_group: list = None):
+        if data_group is None:
+            data_group = []
+        self.datagroup = data_group
 
     def __iter__(self):
         return self.datagroup.__iter__()
@@ -661,13 +665,14 @@ class OutputterHDF5(Outputter):
             flag_continue = True
             while flag_continue:
                 r_name = f'{name}{r_idx}'
-                if grp.__contains__(f'{r_name}'):
-                    grp[r_name].dims[dim_idx].attach_scale(axis_dset)
+                if current_hdf_group.__contains__(f'{r_name}'):
+                    current_hdf_group[r_name].dims[dim_idx].attach_scale(axis_dset)
                     r_idx += 1
                 else:
                     flag_continue = False
 
-        def process_item(obj, grp):
+        def process_item(obj: list | MyOmdsDataseriesObj | MyOmdsDatagroupObj,
+                         grp):
             if isinstance(obj, list):
                 for this_obj in obj:
                     process_item(this_obj, grp)
@@ -677,14 +682,14 @@ class OutputterHDF5(Outputter):
                 while grp.__contains__(f'{obj.basename}{idx}'):
                     idx += 1
 
-                subgrp = grp.create_group(f'{obj.basename}{idx}')
+                sub_grp = grp.create_group(f'{obj.basename}{idx}')
                 for (key, val) in obj.attributes.items():
-                    subgrp.attrs[key] = val
+                    sub_grp.attrs[key] = val
 
                 for this_obj in obj:
-                    process_item(this_obj, subgrp)
+                    process_item(this_obj, sub_grp)
 
-            else:
+            elif isinstance(obj, MyOmdsDataseriesObj):
                 dset = obj.dataseries
                 idx = 1
                 while grp.__contains__(f'{obj.basename}{idx}'):
@@ -699,6 +704,10 @@ class OutputterHDF5(Outputter):
                 # attach "dimension scales" for Axis objects
                 if isinstance(obj, Axis):
                     attach_axis_to_responses(h5dset, grp)
+            else:
+                raise TypeError(f'Object has incorrect type. Expected'
+                                f'list | MyOmdsDataseries | MyOmdsDatagroup, '
+                                f'found {type(obj)}.')
 
         with h5py.File(filename, access_mode) as f:
             if f.__contains__(f'{root}'):
@@ -800,7 +809,7 @@ def myh5disp(group):
             if list(group[i].keys()):
                 print(f"{group.name}/{i}/")
                 myh5disp(group[i])
-        except:
+        except AttributeError:
             print(group[i].name, group[i].dtype, group[i].shape)
 
 
@@ -894,6 +903,28 @@ except FileNotFoundError:
 
 o.output([spec, spec], filename)
 print('Multiple spectra:\n'+'-'*8)
+with h5py.File(filename, 'r') as f:
+    myh5disp(f)
+
+
+# test groups
+group1 = MyOmdsDatagroupObj([spec, spec])
+
+filename = 'tmp4.h5'
+try:
+    os.remove(filename)
+    logger.info(f'removing {filename}')
+except FileNotFoundError:
+    pass
+
+o.output(group1, filename)
+print('Single group:\n'+'-'*8)
+with h5py.File(filename, 'r') as f:
+    myh5disp(f)
+
+group2 = MyOmdsDatagroupObj([group1, spec, spec])
+o.output(group2, filename)
+print('Nested group and spectrum:\n'+'-'*8)
 with h5py.File(filename, 'r') as f:
     myh5disp(f)
 
