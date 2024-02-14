@@ -598,7 +598,9 @@ class Outputter:
     """
     # take response function in and provide fxn to write output file
 
-    def output(self, obj, filename, root='/', access_mode='w',
+    def output(self, obj: list | MyOmdsDataseriesObj | MyOmdsDatagroupObj,
+               filename, root='/',
+               access_mode='w',
                scidata_iri='') -> None:
         pass
 
@@ -613,7 +615,7 @@ class OutputterHDF5(Outputter):
 
         Parameters
         ----------
-        obj_in : MyOmdsDataseriesObj or list of MyOmdsDataseriesObj
+        obj_in : MyOmdsDataseriesObj | MyOmdsDataseriesObj | list
             The input objects to be processed. They must have an
             attribute dataseries. Dataseries must be a dictionary with
             keys "basename", "data", and "dtype".
@@ -660,13 +662,14 @@ class OutputterHDF5(Outputter):
             flag_continue = True
             while flag_continue:
                 r_name = f'{name}{r_idx}'
-                if grp.__contains__(f'{r_name}'):
-                    grp[r_name].dims[dim_idx].attach_scale(axis_dset)
+                if current_hdf_group.__contains__(f'{r_name}'):
+                    current_hdf_group[r_name].dims[dim_idx].attach_scale(axis_dset)
                     r_idx += 1
                 else:
                     flag_continue = False
 
-        def process_item(obj, grp):
+        def process_item(obj: list | MyOmdsDataseriesObj | MyOmdsDatagroupObj,
+                         grp):
             if isinstance(obj, list):
                 for this_obj in obj:
                     process_item(this_obj, grp)
@@ -683,7 +686,7 @@ class OutputterHDF5(Outputter):
                 for this_obj in obj:
                     process_item(this_obj, subgrp)
 
-            else:
+            elif isinstance(obj, MyOmdsDataseriesObj):
                 dset = obj.dataseries
                 idx = 1
                 while grp.__contains__(f'{obj.basename}{idx}'):
@@ -698,6 +701,11 @@ class OutputterHDF5(Outputter):
                 # attach "dimension scales" for Axis objects
                 if isinstance(obj, Axis):
                     attach_axis_to_responses(h5dset, grp)
+            else:
+                raise TypeError(f'Object has incorrect type. Expected'
+                                f'list | MyOmdsDataseries | MyOmdsDatagroup, '
+                                f'found {type(obj)}.' )
+
 
         with h5py.File(filename, access_mode) as f:
             if f.__contains__(f'{root}'):
@@ -812,6 +820,27 @@ with h5py.File(filename, 'r') as f:
     myh5disp(f)
 
 # ToDo: Nesting of spectra in groups
+
+# test groups
+group1 = MyOmdsDatagroupObj([spec, spec])
+
+filename = 'tmp4.h5'
+try:
+    os.remove(filename)
+    logger.info(f'removing {filename}')
+except FileNotFoundError:
+    pass
+
+o.output(group1, filename)
+print('Single group:\n'+'-'*8)
+with h5py.File(filename, 'r') as f:
+    myh5disp(f)
+
+group2 = MyOmdsDatagroupObj([group1, spec, spec])
+o.output(group2, filename)
+print('Nested group and spectrum:\n'+'-'*8)
+with h5py.File(filename, 'r') as f:
+    myh5disp(f)
 
 # reading files is probably the next big thing...
 print('done')
