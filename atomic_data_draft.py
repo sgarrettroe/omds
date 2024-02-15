@@ -511,8 +511,8 @@ class Axis(MyOmdsDataseriesObj):
 class Response(MyOmdsDataseriesObj):
     basename = 'R'
 
-    def __init__(self, kind: str, scale: str = 'mOD'):
-        self.data = np.zeros((3, 3, 3))
+    def __init__(self, data: np.ndarray, kind: str, scale: str = 'mOD'):
+        self.data = data
         self.kind = OMDS['kind'][kind.lstrip('omds:').upper()]
         self.scale = OMDS['scale'][scale.lstrip('omds:Scale')]
 
@@ -877,7 +877,7 @@ with h5py.File(filename, 'r') as f:
     myh5disp(f)
 
 
-resp = Response('absorptive')
+resp = Response(data=np.zeros((3, 3, 3)), kind='absorptive', scale='mOD')
 o.output(resp, filename, access_mode='a')
 with h5py.File(filename, 'r') as f:
     logger.debug('h5 keys found: ' + pformat(f.keys()))
