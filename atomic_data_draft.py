@@ -381,15 +381,24 @@ class Polarization(MyOmdsDataseriesObj):
         return j, p
 
     @property
+    def label(self) -> str:
+        return self.pol[0][0]
+
+    @property
     def dataseries(self) -> dict:
         return {'basename': self.basename,
                 'data': self.pol,
                 'dtype': POLARIZATION_TYPE,
                 'attr': {
                     'class': self.__class__.__name__,
-                    'label': self.pol[0][0]},
+                    'label': self.label},
                 }
 
+    def __str__(self):
+        return f'Polarization("{self.label}")'
+
+    def __repr__(self):
+        return f'Polarization("{self.label}")'
 
 class Axis(MyOmdsDataseriesObj):
     """
@@ -423,6 +432,12 @@ class Axis(MyOmdsDataseriesObj):
             pass
         else:
             self.options |= options
+
+    def __str__(self):
+        return f'Axis(...) shape:{self.x.shape} units:{self.units}'
+
+    def __repr__(self):
+        return f'Axis(...) shape:{self.x.shape} units:{self.units}'
 
     def t_to_w(self, frequency_units=None):
         """
@@ -500,6 +515,12 @@ class Response(MyOmdsDataseriesObj):
         self.data = np.zeros((3, 3, 3))
         self.kind = OMDS['kind'][kind.lstrip('omds:').upper()]
         self.scale = OMDS['scale'][scale.lstrip('omds:Scale')]
+
+    def __str__(self):
+        return f'Response(...) shape:{self.data.shape} kind:{self.kind}'
+
+    def __repr__(self):
+        return f'Response(data=<{self.data.shape}>, kind="{self.kind}", scale="{self.scale}")'
 
     @property
     def dataseries(self) -> dict:
@@ -748,7 +769,7 @@ class InputterHDF5(Inputter):
         if isinstance(item, h5py.Group):
             if item.name == '/':
                 logger.debug('found root group')
-                return [process_item(this_item) for this_item in item.values()]
+                return [self.process_item(this_item) for this_item in item.values()]
 
             else:
                 if 'class' not in item.attrs.keys():
@@ -932,5 +953,7 @@ with h5py.File(filename, 'r') as f:
 i = InputterHDF5()
 uh = i.input('tmp.h5')
 pprint(uh)
+
+print(pol)
 print('done')
 # --- last line
