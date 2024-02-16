@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.io import loadmat
-from base import Spectrum, Response, Axis, Polarization, UNITS, OutputterHDF5
+from base import Spectrum, Response, Axis, Polarization, UNITS
+from io.outputter_hdf5 import OutputterHDF5
 
 file_name = 'sgrlab/data_10P_90I.mat'
 mat_dict = loadmat(file_name, simplify_cells=True)
