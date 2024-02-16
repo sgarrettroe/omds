@@ -813,7 +813,7 @@ class InputterHDF5(Inputter):
 
     def process_response_item(self, item):
         logger.debug(f'Found response item {item.name}')
-        return Response(kind=item.attrs['kind'],scale=item.attrs['scale'])
+        return Response(data=item[()], kind=item.attrs['kind'],scale=item.attrs['scale'])
 
     def process_polarization_item(self, item):
         logger.debug(f'Found polarization item {item.name}')
@@ -825,13 +825,12 @@ class InputterHDF5(Inputter):
 
 
 def myh5disp(group):
-    for i in list(group.keys()):
-        try:
-            if list(group[i].keys()):
-                print(f"{group.name}/{i}/")
-                myh5disp(group[i])
-        except AttributeError:
-            print(group[i].name, group[i].dtype, group[i].shape)
+    def helper(name, obj):
+        if isinstance(obj, h5py.Group):
+            print(name)
+        elif isinstance(obj, h5py.Dataset):
+            print(name, obj.dtype, obj.shape)
+    group.visititems(helper)
 
 
 # below here is testing and debugging
