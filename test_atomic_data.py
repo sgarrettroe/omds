@@ -1,5 +1,5 @@
 import pytest
-from data_structure import Axis, Polarization, UNITS
+from base import Axis, Polarization, UNITS
 import numpy as np
 
 ATOL = 1e-10
