@@ -1,5 +1,10 @@
-import h5py
 import logging
+import os
+
+import h5py
+
+from base import (MyOmdsDatagroupObj, MyOmdsDataseriesObj, Spectrum,
+                    Response, Polarization, Axis, UNITS)
 
 # set up logging
 logging.basicConfig(

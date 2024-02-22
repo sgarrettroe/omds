@@ -1,8 +1,10 @@
-from . import Outputter
-from ..base import MyOmdsDataseriesObj, MyOmdsDatagroupObj, Spectrum, Response, Axis, Polarization
-import h5py
-import re
 import os
+import re
+
+import h5py
+
+from . import Outputter
+from . import MyOmdsDataseriesObj, MyOmdsDatagroupObj, Spectrum, Response, Axis, Polarization
 
 
 class OutputterHDF5(Outputter):
