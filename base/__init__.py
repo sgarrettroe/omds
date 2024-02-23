@@ -131,10 +131,13 @@ class MyOmdsDatagroupObj:
 
     basename = 'Datagroup'
 
-    def __init__(self, data_group: list = None):
+    def __init__(self, data_group: list = None, attributes: dict = None):
         if data_group is None:
             data_group = []
         self.datagroup = data_group
+        if attributes is None:
+            attributes = {}
+        self._attributes = attributes
 
     def __iter__(self):
         return self.datagroup.__iter__()
@@ -145,7 +148,7 @@ class MyOmdsDatagroupObj:
     @property
     def attributes(self):
         return {'class': self.__class__.__name__,
-                }
+                } | self._attributes
 
 
 PolarizationTuple = namedtuple('Polarization',
@@ -538,6 +541,7 @@ class Spectrum(MyOmdsDatagroupObj):
     basename = 'spectrum'
 
     def __init__(self, responses=None, axes=None, pols=None):
+        super().__init__()
         if responses is None:
             responses = []
         if axes is None:
@@ -550,6 +554,7 @@ class Spectrum(MyOmdsDatagroupObj):
         self.responses = responses
         self.axes = axes
         self.pols = pols
+        self._attributes['order'] = len(axes)
 
     @property
     def datagroup(self) -> list:
