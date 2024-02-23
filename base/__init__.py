@@ -49,18 +49,25 @@ class UNITS(Enum):
     """
     # ToDo: incorporate .units functionality here
     # Time
+    AttoSEC = constants.atto
     AS = constants.atto  # note clash of SI "as" with keyword "as"
     ATTOSECONDS = constants.atto
+    FemtoSEC = constants.femto
     FS = constants.femto
+    PicoSEC = constants.pico
     PS = constants.pico
+    NanoSEC = constants.nano
     NS = constants.nano
+    MicroSEC = constants.micro
     US = constants.micro
+    MilliSEC = constants.milli
     MS = constants.milli
     S = 1
     # Frequency
     HZ = 1
     THZ = constants.tera
     RAD_PER_SEC = 2 * constants.pi
+    PER_CentiM = constants.c / constants.centi
     CM_1 = constants.c / constants.centi
     INV_CM = constants.c / constants.centi
     PER_CM = constants.c / constants.centi
