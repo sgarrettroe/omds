@@ -1,0 +1,73 @@
+<http://qudt.org/schema/qudt/QuantityKind> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://qudt.org/vocab/quantitykind/Energy> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://qudt.org/schema/qudt/QuantityKind> .
+<http://qudt.org/vocab/quantitykind/Energy> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://qudt.org/vocab/quantitykind/Frequency> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://qudt.org/schema/qudt/QuantityKind> .
+<http://qudt.org/vocab/quantitykind/Frequency> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://qudt.org/vocab/quantitykind/Length> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://qudt.org/schema/qudt/QuantityKind> .
+<http://qudt.org/vocab/quantitykind/Length> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> <http://www.w3.org/2000/01/rdf-schema#comment> "A relation to convert from one set of units to another" .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/RelationReplacement> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionInputName> "wavelength_of_light"^^<http://www.w3.org/2001/XMLSchema#anyURI> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionMatlab> "constant_value_planck_constant * constant_value_speed_of_light_vacuum / wavelength_of_light"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionPython> "constant_value_planck_constant * constant_value_speed_of_light_vacuum / wavelength_of_light"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsFrom> <http://qudt.org/vocab/quantitykind/Length> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsTo> <http://qudt.org/vocab/quantitykind/Energy> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationReplacement> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementPlanckConstant> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationReplacement> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementSpeedOfLight> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToEnergyOfLight> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression> "constant_value_speed_of_light_vacuum / value_wavelength_of_light" .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionInputName> "value_wavelength_of_light" .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsFrom> <http://qudt.org/vocab/quantitykind/Length> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsTo> <http://qudt.org/vocab/quantitykind/Frequency> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationReplacement> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementSpeedOfLight> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/convertWavelengthOfLightToFrequencyOfLight> <http://www.w3.org/2000/01/rdf-schema#comment> "Conversion of Wavelength to Frequency in base SI units."@en .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression> <http://www.w3.org/2000/01/rdf-schema#comment> "An expression for how a conversion is to be calculated"@en .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression> <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2002/07/owl#topDataProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionInputName> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionInputName> <http://www.w3.org/2000/01/rdf-schema#comment> "Name of the input variable as it appears in the expression."@en .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionInputName> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2002/07/owl#topDataProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionMatlab> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Datatype> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionMatlab> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionMatlab> <http://www.w3.org/2000/01/rdf-schema#comment> "Matlab expression for the relation" .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionMatlab> <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionMatlab> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionMatlab> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionPython> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Datatype> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionPython> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionPython> <http://www.w3.org/2000/01/rdf-schema#comment> "Python expression for the relation" .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionPython> <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionPython> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionPython> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expression> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementName> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#DatatypeProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementName> <http://www.w3.org/2000/01/rdf-schema#comment> "The name of the variable in the expression to be replaced with the replacement value." .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementName> <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/RelationReplacement> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementName> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementName> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2002/07/owl#topDataProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementValue> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementValue> <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/RelationReplacement> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementValue> <http://www.w3.org/2000/01/rdf-schema#range> <http://qudt.org/schema/qudt/ConstantValue> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsFrom> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsFrom> <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsFrom> <http://www.w3.org/2000/01/rdf-schema#range> <http://qudt.org/schema/qudt/QuantityKind> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsTo> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsTo> <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationConvertsTo> <http://www.w3.org/2000/01/rdf-schema#range> <http://qudt.org/schema/qudt/QuantityKind> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationReplacement> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationReplacement> <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/ConversionRelation> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/relationReplacement> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/RelationReplacement> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementPlanckConstant> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementName> "constant_value_planck_constant" .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementPlanckConstant> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementValue> <http://qudt.org/vocab/constant/Value_PlanckConstant> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementPlanckConstant> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/RelationReplacement> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementPlanckConstant> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementSpeedOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementName> "constant_value_speed_of_light_vacuum" .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementSpeedOfLight> <http://www.semanticweb.org/sgr/ontologies/2024/1/omds/expressionReplacementValue> <http://qudt.org/vocab/constant/Value_SpeedOfLight_Vacuum> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds/replacementSpeedOfLight> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Ontology> .
+<http://www.semanticweb.org/sgr/ontologies/2024/1/omds> <http://www.w3.org/2000/01/rdf-schema#comment> "Ontology for Open Multi-Dimensional Spectroscopy (OMDS)"@en .
