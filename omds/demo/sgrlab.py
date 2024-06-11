@@ -1,5 +1,5 @@
-from omds_io.inputter_sgrlab import InputterSGRLab
-from omds_io.outputter_hdf5 import OutputterHDF5
+from omds.omds_io.inputter_sgrlab import InputterSGRLab
+from omds.omds_io.outputter_hdf5 import OutputterHDF5
 
 file_name = '../data/sgrlab/data_10P_90I.mat'
 

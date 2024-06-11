@@ -1,4 +1,4 @@
-from base import *
+from omds.base import *
 
 # below here is testing and debugging
 t = np.arange(32, dtype=float)

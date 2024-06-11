@@ -2,10 +2,10 @@
 import numbers
 import rdflib
 from pprint import pprint
-from units.unit import Unit
-from units.unit_factory import UnitFactory
-from units.multiplier import Multiplier
-from units.quantity import Quantity
+from omds.units.unit import Unit
+from omds.units.unit_factory import UnitFactory
+from omds.units.multiplier import Multiplier
+from omds.units.quantity import Quantity
 import re
 from keyword import iskeyword
 import math

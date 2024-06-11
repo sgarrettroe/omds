@@ -1,9 +1,9 @@
 # playing around with my version of units
 import rdflib
 from pprint import pprint
-from units.unit import Unit
-from units.multiplier import Multiplier
-from units.quantity import Quantity
+from omds.units.unit import Unit
+from omds.units.multiplier import Multiplier
+from omds.units.quantity import Quantity
 
 QUDT = rdflib.Namespace("http://qudt.org/schema/qudt/")
 UNIT = rdflib.Namespace("https://qudt.org/vocab/unit/")

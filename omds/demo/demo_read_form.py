@@ -1,4 +1,4 @@
-from apps import qt_app_form_learning1
+from omds.apps import qt_app_form_learning1
 
 d = qt_app_form_learning1.main()
 

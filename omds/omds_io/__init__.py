@@ -3,8 +3,8 @@ import os
 
 import h5py
 
-from base import (MyOmdsDatagroupObj, MyOmdsDataseriesObj, Spectrum,
-                    Response, Polarization, Axis, UNITS)
+from omds.base import (MyOmdsDatagroupObj, MyOmdsDataseriesObj, Spectrum,
+                       Response, Polarization, Axis, UNITS)
 
 # set up logging
 logging.basicConfig(

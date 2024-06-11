@@ -1,5 +1,5 @@
 import pytest
-from base import Axis, Polarization, UNITS
+from omds.base import Axis, Polarization, UNITS
 import numpy as np
 
 ATOL = 1e-10
