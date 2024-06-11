@@ -1,5 +1,5 @@
 from . import Inputter, logger
-from ..base import MyOmdsDatagroupObj, MyOmdsDataseriesObj, Spectrum, Response, Polarization, Axis
+from base import MyOmdsDatagroupObj, MyOmdsDataseriesObj, Spectrum, Response, Polarization, Axis
 import h5py
 
 

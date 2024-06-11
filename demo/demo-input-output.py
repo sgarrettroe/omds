@@ -1,4 +1,8 @@
 from base import *
+from omds_io import myh5disp
+from omds_io.inputter_hdf5 import InputterHDF5
+from omds_io.outputter_hdf5 import OutputterHDF5
+from pprint import pformat
 
 # below here is testing and debugging
 t = np.arange(32, dtype=float)
@@ -117,7 +121,7 @@ with h5py.File(filename, 'r') as f:
 
 # reading files is probably the next big thing...
 i = InputterHDF5()
-uh = i.input('tmp.h5')
+uh = i.input('../tmp.h5')
 pprint(uh)
 
 print(pol)
