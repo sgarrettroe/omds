@@ -23,9 +23,11 @@ dependencies:
     - conda-forge::rdflib
     - conda-forge::h5py
     - pip
+    - pytest
     - pip:
         - scidata
         - scidatalib
         - globus-sdk
         - pyqudt
+        - twine
 
