@@ -25,9 +25,11 @@ dependencies:
     - conda-forge::h5py
     - twine
     - pip
+    - pytest
     - pip:
         - scidata
         - scidatalib
         - globus-sdk
         - pyqudt
+        - twine
 
