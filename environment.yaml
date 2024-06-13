@@ -15,6 +15,7 @@
 name: omds
 dependencies:
     - python=3.11
+    - pytest
     - numpy
     - scipy
     - jupyter
@@ -22,6 +23,7 @@ dependencies:
     - html5lib
     - conda-forge::rdflib
     - conda-forge::h5py
+    - twine
     - pip
     - pip:
         - scidata
