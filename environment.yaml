@@ -23,7 +23,9 @@ dependencies:
     - html5lib
     - conda-forge::rdflib
     - conda-forge::h5py
+    - twine
     - pip
+    - pytest
     - pip:
         - scidata
         - scidatalib
