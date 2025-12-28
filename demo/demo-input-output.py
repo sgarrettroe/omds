@@ -1,11 +1,15 @@
 from base import *
+from omds_io import myh5disp
+from omds_io.inputter_hdf5 import InputterHDF5
+from omds_io.outputter_hdf5 import OutputterHDF5
+from pprint import pformat
 
 # below here is testing and debugging
 t = np.arange(32, dtype=float)
 opts = {'fftshift': True}
 dim = Axis(t, UNITS.FS, options=opts)
 
-filename = 'tmp.h5'
+filename = '../tmp.h5'
 # try to clean up from last time
 try:
     os.remove(filename)
@@ -68,7 +72,7 @@ x3 = Axis(t3, UNITS.FS, options=opts)
 print('Single spectrum:\n'+'-'*8)
 spec = Spectrum(responses=[resp, resp], axes=[x1, x2, x3],
                 pols=[pol, pol, pol, pol])
-filename = 'tmp2.h5'
+filename = '../tmp2.h5'
 try:
     os.remove(filename)
     logger.info(f'removing {filename}')
@@ -81,7 +85,7 @@ o.output(spec, filename, access_mode='a', root='/spectrum')
 with h5py.File(filename, 'r') as f:
     myh5disp(f)
 
-filename = 'tmp3.h5'
+filename = '../tmp3.h5'
 try:
     os.remove(filename)
     logger.info(f'removing {filename}')
@@ -97,7 +101,7 @@ with h5py.File(filename, 'r') as f:
 # test groups
 group1 = MyOmdsDatagroupObj([spec, spec])
 
-filename = 'tmp4.h5'
+filename = '../tmp4.h5'
 try:
     os.remove(filename)
     logger.info(f'removing {filename}')
@@ -117,7 +121,7 @@ with h5py.File(filename, 'r') as f:
 
 # reading files is probably the next big thing...
 i = InputterHDF5()
-uh = i.input('tmp.h5')
+uh = i.input('../tmp.h5')
 pprint(uh)
 
 print(pol)

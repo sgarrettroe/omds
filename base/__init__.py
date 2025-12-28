@@ -49,18 +49,25 @@ class UNITS(Enum):
     """
     # ToDo: incorporate .units functionality here
     # Time
+    AttoSEC = constants.atto
     AS = constants.atto  # note clash of SI "as" with keyword "as"
     ATTOSECONDS = constants.atto
+    FemtoSEC = constants.femto
     FS = constants.femto
+    PicoSEC = constants.pico
     PS = constants.pico
+    NanoSEC = constants.nano
     NS = constants.nano
+    MicroSEC = constants.micro
     US = constants.micro
+    MilliSEC = constants.milli
     MS = constants.milli
     S = 1
     # Frequency
     HZ = 1
     THZ = constants.tera
     RAD_PER_SEC = 2 * constants.pi
+    PER_CentiM = constants.c / constants.centi
     CM_1 = constants.c / constants.centi
     INV_CM = constants.c / constants.centi
     PER_CM = constants.c / constants.centi
@@ -131,10 +138,13 @@ class MyOmdsDatagroupObj:
 
     basename = 'Datagroup'
 
-    def __init__(self, data_group: list = None):
+    def __init__(self, data_group: list = None, attributes: dict = None):
         if data_group is None:
             data_group = []
         self.datagroup = data_group
+        if attributes is None:
+            attributes = {}
+        self._attributes = attributes
 
     def __iter__(self):
         return self.datagroup.__iter__()
@@ -145,7 +155,7 @@ class MyOmdsDatagroupObj:
     @property
     def attributes(self):
         return {'class': self.__class__.__name__,
-                }
+                } | self._attributes
 
 
 PolarizationTuple = namedtuple('Polarization',
@@ -538,6 +548,7 @@ class Spectrum(MyOmdsDatagroupObj):
     basename = 'spectrum'
 
     def __init__(self, responses=None, axes=None, pols=None):
+        super().__init__()
         if responses is None:
             responses = []
         if axes is None:
@@ -550,6 +561,7 @@ class Spectrum(MyOmdsDatagroupObj):
         self.responses = responses
         self.axes = axes
         self.pols = pols
+        self._attributes['order'] = len(axes)
 
     @property
     def datagroup(self) -> list:
