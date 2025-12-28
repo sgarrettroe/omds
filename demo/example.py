@@ -333,7 +333,8 @@ def create_scidata():
         'Chalk Research Group, Department of Chemistry, Univ. of North Florida'
     )
     lic = 'https://creativecommons.org/licenses/by-nc-nd/4.0/'
-    example.rights([{'holder': holder, 'license': lic}])
+    #example.rights([{'holder': holder, 'license': lic}])
+    example.rights(holder=holder, license=lic)
 
     packet = [{
         "aspects":
